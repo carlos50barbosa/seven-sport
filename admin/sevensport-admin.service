@@ -8,9 +8,16 @@
 # Conferir:  systemctl status sevensport-admin
 # Log:       journalctl -u sevensport-admin -f
 #
-# ⚠ Ajuste `User=` para o dono de /opt/apps/seven-sport (confira com `ls -ld`).
+# ⚠ Ajuste `User=`/`Group=` para o dono de /opt/apps/seven-sport (`ls -ld`).
 #   O serviço PRECISA poder escrever no diretório do projeto: ele grava as fotos
-#   e roda o `npm run build`, que reescreve .next/ e out/.
+#   e roda o `npm run build`, que reescreve .next/ e out/. O mesmo usuário tem
+#   que ser dono de /var/lib/sevensport-admin (o HOME abaixo), senão o npm não
+#   consegue escrever o cache e o build falha.
+#
+# ⚠ Esta VPS é AlmaLinux/RHEL: com SELinux em Enforcing o Nginx não consegue
+#   abrir conexão nem para 127.0.0.1, e o /admin devolve 502 mesmo com tudo
+#   certo dos dois lados. Libere uma vez com:
+#     sudo setsebool -P httpd_can_network_connect 1
 
 [Unit]
 Description=Painel do admin da Seven Sport (fotos do site)

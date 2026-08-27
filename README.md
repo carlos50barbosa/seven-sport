@@ -467,25 +467,55 @@ passaria a ver a seção vazia e o carregamento ficaria mais lento. Não valeu o
 
 ### Instalação na VPS (uma vez)
 
+O painel só chega na VPS depois que o commit estiver na **`main`** — o deploy é `git pull` nela.
+
 ```bash
 cd /opt/apps/seven-sport && git pull && npm ci
 
-# 1. Credenciais. Rode num terminal de verdade — a senha é digitada escondida.
+# 1. De quem é o projeto? O serviço tem que rodar como esse usuário: ele grava as
+#    fotos e roda o build, os dois dentro desta pasta.
+ls -ld /opt/apps/seven-sport
+
+# 2. Credenciais. Num terminal de verdade — a senha é digitada escondida, e por
+#    isso não vai para o ~/.bash_history.
 npm run admin:senha
-#    Cole a saída em /etc/sevensport-admin.env e tranque o arquivo:
-sudo chown root:root /etc/sevensport-admin.env && sudo chmod 600 /etc/sevensport-admin.env
+sudo nano /etc/sevensport-admin.env          # cole só as três linhas ADMIN_*
+sudo chown root:root /etc/sevensport-admin.env
+sudo chmod 600 /etc/sevensport-admin.env
 
-# 2. HOME do serviço (o npm precisa de um lugar para o cache)
+# 3. HOME do serviço, para o cache do npm durante o build.
+#    O dono TEM que ser o usuário do passo 1 — root aqui faz o build falhar com
+#    erro de permissão que não parece ter nada a ver com a causa.
 sudo mkdir -p /var/lib/sevensport-admin
+sudo chown SEU_USUARIO:SEU_GRUPO /var/lib/sevensport-admin
 
-# 3. O serviço. Confira `User=` no arquivo antes: tem que ser o dono de /opt/apps/seven-sport.
+# 4. O serviço. Ajuste `User=` e `Group=` no arquivo antes de copiar.
 sudo cp admin/sevensport-admin.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now sevensport-admin
 systemctl status sevensport-admin
+
+# 5. Confira que o serviço responde ANTES de mexer no Nginx.
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4123/admin/    # 302
 ```
 
-Depois acrescente ao server block em `/etc/nginx/conf.d/sevensport.conf` (o bloco completo está
-em "2. Nginx") e recarregue com `sudo nginx -t && sudo systemctl reload nginx`.
+⚠ **SELinux — o passo que só existe porque esta VPS é AlmaLinux/RHEL.** Com SELinux em
+`Enforcing`, o Nginx é **proibido de abrir conexão de rede**, inclusive para `127.0.0.1:4123`.
+O sintoma engana: o serviço está no ar, o `curl` direto na porta responde, o `nginx -t` passa —
+e mesmo assim `/admin` devolve **502**, com `Permission denied while connecting to upstream`
+no `/var/log/nginx/error.log`. Nenhum tutorial escrito para Debian menciona isso.
+
+```bash
+getenforce                                    # Enforcing?
+sudo setsebool -P httpd_can_network_connect 1 # o -P grava, senão volta no reboot
+```
+
+Depois acrescente o `location /admin` ao server block em `/etc/nginx/conf.d/sevensport.conf`
+(o bloco completo está em "2. Nginx"), recarregue e confirme pelo caminho público:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+curl -s -o /dev/null -w '%{http_code}\n' https://sevensport.com.br/admin/   # 200
+```
 
 ⚠ **O painel só deve existir sob HTTPS.** O cookie de sessão só ganha a marca `Secure` quando o
 Nginx repassa `X-Forwarded-Proto: https`. Faça o passo 3 do deploy (certbot) antes de divulgar
@@ -582,6 +612,7 @@ build deixaria a árvore suja e quebraria o `git pull` seguinte.
 | Sintoma | Causa quase certa |
 |---|---|
 | `/admin` dá 404 | Falta o `location /admin` no Nginx, ou o serviço está parado (`systemctl status sevensport-admin`) |
+| `/admin` dá 502, mas o `curl` direto na porta 4123 responde | SELinux barrando o Nginx: `sudo setsebool -P httpd_can_network_connect 1` |
 | Login não passa, sem erro na tela | Cookie descartado: o painel está em HTTP puro, ou falta `proxy_set_header X-Forwarded-Proto $scheme` |
 | Upload falha em foto grande | `client_max_body_size` do Nginx (o padrão dele é 1 MB — o bloco recomendado usa 26 MB) |
 | "Publicar" falha e o log fala de permissão | O `User=` do serviço não é dono de `/opt/apps/seven-sport`, ou falta `/var/lib/sevensport-admin` |
