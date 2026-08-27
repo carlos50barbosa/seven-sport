@@ -2,13 +2,13 @@
  * Gera as credenciais do painel do admin.
  *
  * Rodar:
- *   npm run admin:senha                                   imprime para você colar
  *   sudo node admin/senha.mjs --escrever /etc/sevensport-admin.env    grava direto
+ *   npm run admin:senha                                   imprime para você colar
  *
- * PREFIRA `--escrever`. Copiar e colar um hash de 130 caracteres num editor de
- * terminal é frágil: editor que quebra linha longa (nano antigo faz isso por
- * padrão) parte o valor no meio, o systemd descarta o pedaço solto, e o serviço
- * sobe reclamando de credencial faltando — com o arquivo parecendo certo.
+ * PREFIRA `--escrever`. Copiar e colar um hash de 150 caracteres por terminal e
+ * editor é frágil: já aconteceu de os NOMES das variáveis chegarem ao arquivo e
+ * os valores não, deixando `ADMIN_SENHA_HASH=` vazio — três linhas, tudo com
+ * cara de certo, e o serviço em laço de restart reclamando de credencial.
  *
  * A senha em claro nunca é gravada em lugar nenhum: o que sai daqui é o hash
  * scrypt, que não dá para voltar atrás. E a senha é lida escondida, sem eco, para
@@ -28,23 +28,28 @@ export function gerarHash(senha) {
   return `scrypt$${CUSTO.N}$${CUSTO.r}$${CUSTO.p}$${sal.toString('base64')}$${derivada.toString('base64')}`;
 }
 
-/** Lê sem eco. O readline normal devolveria a senha na tela e no scrollback. */
-function perguntarEscondido(rotulo) {
-  return perguntar(rotulo, true);
-}
-
-function perguntar(rotulo, escondido = false) {
+/**
+ * Uma pergunta no terminal, com ou sem eco.
+ *
+ * ⚠ Recebe a interface de readline pronta e NÃO a fecha. Abrir uma por pergunta
+ * parece mais limpo e não funciona: depois que a primeira é fechada, a seguinte
+ * nasce muda no mesmo TTY — o texto do prompt não aparece e a resposta volta
+ * vazia, sem erro nenhum. Uma interface para a sessão inteira, fechada no fim.
+ */
+export function perguntar(rl, rotulo, escondido = false) {
   return new Promise((resolve, reject) => {
-    const rl = createInterface({ input: stdin, output: stdout, terminal: true });
     const escrever = stdout.write.bind(stdout);
     let engolindo = escondido;
-    stdout.write = (pedaco, ...resto) => (engolindo ? true : escrever(pedaco, ...resto));
+    if (escondido) {
+      stdout.write = (pedaco, ...resto) => (engolindo ? true : escrever(pedaco, ...resto));
+    }
     escrever(rotulo);
     rl.question('', (resposta) => {
-      engolindo = false;
-      stdout.write = escrever;
-      if (escondido) escrever('\n');
-      rl.close();
+      if (escondido) {
+        engolindo = false;
+        stdout.write = escrever;
+        escrever('\n');
+      }
       resolve(resposta);
     });
     rl.on('error', reject);
@@ -75,8 +80,21 @@ if (import.meta.filename === process.argv[1]) {
     process.exit(1);
   }
 
-  const senha = await perguntarEscondido(`Senha para o usuário "${usuario}": `);
-  const confirmacao = await perguntarEscondido('Repita a senha: ');
+  const rl = createInterface({ input: stdin, output: stdout, terminal: true });
+
+  // A confirmação vem ANTES da senha: não faz sentido digitar duas vezes para
+  // só então descobrir que nada seria escrito.
+  if (escrever && existsSync(escrever)) {
+    const resposta = await perguntar(rl, `${escrever} já existe. Sobrescrever? (s/N) `);
+    if (resposta.trim().toLowerCase() !== 's') {
+      console.error('Nada foi escrito.');
+      process.exit(1);
+    }
+  }
+
+  const senha = await perguntar(rl, `Senha para o usuário "${usuario}": `, true);
+  const confirmacao = await perguntar(rl, 'Repita a senha: ', true);
+  rl.close();
 
   if (senha !== confirmacao) {
     console.error('\nAs duas senhas não batem. Nada foi gerado.');
@@ -95,7 +113,7 @@ if (import.meta.filename === process.argv[1]) {
   if (!escrever) {
     console.log(`
 Cole as TRÊS linhas em admin/.env.local (local) ou /etc/sevensport-admin.env (VPS).
-Cada uma é UMA linha só — se o editor quebrar o hash no meio, não funciona.
+Cada uma é UMA linha só — se o editor cortar ou quebrar o hash, não funciona.
 O arquivo NÃO pode ir para o git — o .gitignore já cobre admin/.env.local.
 
 ${conteudo}
@@ -106,14 +124,6 @@ Na VPS, evite o copia-e-cola:
   sudo node admin/senha.mjs --escrever /etc/sevensport-admin.env
 `);
     process.exit(0);
-  }
-
-  if (existsSync(escrever)) {
-    const resposta = await perguntar(`${escrever} já existe. Sobrescrever? (s/N) `);
-    if (resposta.trim().toLowerCase() !== 's') {
-      console.error('Nada foi escrito.');
-      process.exit(1);
-    }
   }
 
   // O modo do writeFileSync só vale para arquivo NOVO; num que já existia, o
