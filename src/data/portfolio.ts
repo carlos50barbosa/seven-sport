@@ -52,21 +52,21 @@ export const portfolio: Uniforme[] = [
     slug: 'gremio-cacimbinha',
     time: 'Grêmio Cacimbinha',
     contexto: 'Futebol de campo',
-    foto: { frente: '/uniformes/gremio-cacimbinha.webp' },
+    foto: { frente: '/fotos/gremio-cacimbinha.webp' },
   },
   {
     slug: 'santa-isabel',
     time: 'Santa Isabel',
     contexto: 'Futebol de campo',
-    foto: { frente: '/uniformes/santa-isabel.webp' },
+    foto: { frente: '/fotos/santa-isabel.webp' },
   },
   {
     slug: 'ferroviario-carnaiba',
     time: 'Ferroviário Carnaíba',
     contexto: 'Enviado para PE',
     foto: {
-      frente: '/uniformes/ferroviario-frente.webp',
-      costas: '/uniformes/ferroviario-costas.webp',
+      frente: '/fotos/ferroviario-frente.webp',
+      costas: '/fotos/ferroviario-costas.webp',
     },
   },
   {
@@ -74,21 +74,21 @@ export const portfolio: Uniforme[] = [
     time: 'Amigos do Gole',
     contexto: 'Com patrocínio',
     foto: {
-      frente: '/uniformes/amigos-do-gole-frente.webp',
-      costas: '/uniformes/amigos-do-gole-costas.webp',
+      frente: '/fotos/amigos-do-gole-frente.webp',
+      costas: '/fotos/amigos-do-gole-costas.webp',
     },
   },
   {
     slug: 'laranjo-fc',
     time: 'Laranjo FC',
     contexto: 'Veteranos · campo',
-    foto: { frente: '/uniformes/laranjo-fc.webp' },
+    foto: { frente: '/fotos/laranjo-fc.webp' },
   },
   {
     slug: 'erem-jms',
     time: 'EREM JMS',
     contexto: 'Escola de ensino médio',
-    foto: { frente: '/uniformes/erem-jms.webp' },
+    foto: { frente: '/fotos/erem-jms.webp' },
   },
 ];
 
@@ -98,8 +98,8 @@ export const uniformeCorporativo: Uniforme = {
   time: 'Margirius',
   contexto: 'Uniforme de empresa',
   foto: {
-    frente: '/uniformes/margirius-frente.webp',
-    costas: '/uniformes/margirius-costas.webp',
+    frente: '/fotos/margirius-frente.webp',
+    costas: '/fotos/margirius-costas.webp',
   },
 };
 
@@ -108,12 +108,12 @@ export const uniformeDestaque: Uniforme = {
   slug: 'arruma-nada',
   time: 'Arruma Nada FC',
   contexto: 'Campo · com patrocínio',
-  foto: { frente: '/uniformes/arruma-nada.webp' },
+  foto: { frente: '/fotos/arruma-nada.webp' },
 };
 
 /** A prancha que o cliente recebe no WhatsApp, do jeito que a loja envia. */
 export const pranchaExemplo = {
-  src: '/uniformes/prancha-exemplo.webp',
+  src: '/fotos/prancha-exemplo.webp',
   alt: 'Arte digital do uniforme do time Amigos do Gole: frente e costas lado a lado, com escudo, patrocinadores, nome e número, do jeito que a Seven Sport envia no WhatsApp antes de produzir.',
   largura: 1400,
   altura: 1078,

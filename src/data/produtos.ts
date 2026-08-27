@@ -90,7 +90,7 @@ export const produtos: Produto[] = [
       'Varejo e atacado',
     ],
     desenho: 'bola',
-    foto: '/uniformes/bola-society.webp',
+    foto: '/fotos/bola-society.webp',
     personalizado: false,
     atacado: true,
   },

@@ -2,7 +2,7 @@
  * Prepara os assets do cliente para o site.
  *
  * Entrada : as fotos originais que o dono enviou
- * Saída   : public/uniformes/*.webp e public/logo-seven-sport.png
+ * Saída   : public/fotos/*.webp e public/logo-seven-sport.png
  *
  * Rodar:  node scripts/preparar-imagens.mjs "C:/Users/josec/Downloads/Seven"
  *
@@ -15,7 +15,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const ORIGEM = process.argv[2] ?? 'C:/Users/josec/Downloads/Seven';
-const DESTINO_UNIFORMES = 'public/uniformes';
+const DESTINO_UNIFORMES = 'public/fotos';
 const LARGURA_CARD = 900;
 
 /** [esquerda, topo, largura, altura] no tamanho original da foto. */

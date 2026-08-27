@@ -29,7 +29,7 @@ O site **não vende**: ele existe para transformar visitante em conversa qualifi
 | Fontes | `next/font/google` (self-hosted, sem CDN em runtime) |
 | Ícones | `lucide-react` |
 | Animação | CSS + `IntersectionObserver` próprio (sem framer-motion) |
-| Backend | nenhum — todas as rotas são estáticas (SSG) |
+| Backend | nenhum — `output: 'export'`, o Nginx serve arquivo |
 
 Zero dependência externa em runtime. A única requisição a terceiros é o `iframe` do Google Maps, com `loading="lazy"`.
 
@@ -66,7 +66,7 @@ WebP direto da pasta que o dono enviou.
 node scripts/preparar-imagens.mjs "C:/Users/josec/Downloads/Seven"
 ```
 
-Ele produz `public/uniformes/*.webp` e as três versões do logo. As caixas de corte estão no topo
+Ele produz `public/fotos/*.webp` e as três versões do logo. As caixas de corte estão no topo
 do arquivo, uma linha por foto — chegou foto nova, acrescente a linha e rode de novo.
 
 O logo veio sobre fundo branco chapado; o script faz um **flood fill a partir das bordas** para
@@ -113,7 +113,7 @@ Para adicionar um time, basta uma linha no array:
 Quando as fotos reais das pranchas chegarem, adicione o campo `foto` e o card troca o vetor pela imagem automaticamente:
 
 ```ts
-foto: { frente: '/uniformes/novo-time-frente.webp', costas: '/uniformes/novo-time-costas.webp' }
+foto: { frente: '/fotos/novo-time-frente.webp', costas: '/fotos/novo-time-costas.webp' }
 ```
 
 ### Tecidos e escudos — `src/data/acabamentos.ts`
@@ -161,7 +161,8 @@ src/
     ui/       MockupBoard (assinatura) · KitSvg · DesenhoProduto · Amostras
               Logo · Button · SectionTitle · Reveal · Icons
   data/       site.ts · portfolio.ts · produtos.ts · acabamentos.ts
-  lib/        whatsapp.ts
+  lib/        whatsapp.ts · asset.ts
+scripts/      preparar-imagens.mjs (recorta as fotos do cliente)
 ```
 
 ---
@@ -181,195 +182,65 @@ src/
 
 4. **Logo em vetor** (`src/components/ui/Logo.tsx`) enquanto o arquivo em alta não chega. Quando chegar, salve em `public/logo-seven-sport.png` e troque o componente por um `<Image />`.
 
-5. **Deploy como SSG servido por `next start` sob PM2** (e não `output: 'export'`), como pede a seção de deploy. Todas as rotas são pré-renderizadas em build; o Node serve arquivos estáticos e mantém `next/image` e a OG image funcionando. Se preferir servir direto pelo Nginx, veja "Alternativa 100% estática" abaixo.
+5. **Deploy por export estático, não por `next start` sob PM2** — o briefing pedia PM2, e o
+   runbook começou assim. Mudou depois de olhar a VPS: ela hospeda cinco sites, o padrão da
+   máquina é servir pasta buildada (`/opt/apps/*/dist`), e a porta 3000 já é de outro projeto.
+   Um processo Node a mais só acrescentaria coisa para cair. O site não tem nada dinâmico, então
+   o export não custa funcionalidade — custa a otimização de imagem em runtime, compensada por
+   já gerar as fotos no tamanho certo. `ecosystem.config.js` foi removido: não há processo.
 
 ---
 
-## Deploy em subpasta — https://servicostech.com.br/seven-sport
+## Deploy — sevensport.com.br
 
-O site é servido de dentro do domínio da agência, não de um domínio próprio. Quem faz isso
-funcionar é o `basePath` do Next: ele prefixa sozinho as rotas do `<Link>`, os assets de `/_next`
-e o `src` do `next/image`. Nenhum componente sabe que existe subpasta.
+O site é **estático**. `npm run build` gera a pasta `out/` com o HTML pronto, e o Nginx serve
+arquivo. Sem Node em produção, sem PM2, sem porta, sem processo para cair.
 
-### Configuração — duas variáveis, um arquivo
+Isso é escolha, não limitação: o site não tem nenhuma API route nem server action, então não se
+perde funcionalidade. O que se perde é a otimização de imagem em runtime do `next/image` — por
+isso as fotos já saem no tamanho certo do `scripts/preparar-imagens.mjs` (900px de largura, WebP,
+40–170 KB cada) em vez de irem em resolução de câmera.
 
-`.env` (versionado, não tem segredo):
+### Configuração
 
-```
-NEXT_PUBLIC_BASE_PATH=/seven-sport
-NEXT_PUBLIC_SITE_URL=https://servicostech.com.br/seven-sport
-```
-
-São lidas em **tempo de build** e também pelo `next dev` — assim o ambiente local fica igual ao de produção. Mudou aqui, rode `npm run build` de novo.
-
-Para rodar sem o prefixo na sua máquina, crie um `.env.local` (não versionado) com `NEXT_PUBLIC_BASE_PATH=` vazio; ele tem prioridade.
-
-**No dia em que o domínio próprio entrar**, esvazie a primeira e troque a segunda:
+`.env` (versionado, sem segredo):
 
 ```
 NEXT_PUBLIC_BASE_PATH=
 NEXT_PUBLIC_SITE_URL=https://sevensport.com.br
 ```
 
-Rebuild e pronto — canonical, sitemap, robots, OG e JSON-LD acompanham sozinhos.
+`BASE_PATH` vazio é o certo para o domínio próprio. Ele só existe para publicar uma prévia numa
+subpasta (`/uma-pasta`), como foi feito para mostrar ao cliente antes do domínio sair.
 
-### 1. Build na VPS
+### 1. Build
+
+Na VPS, seguindo a convenção que a máquina já usa para os outros projetos (`/opt/apps/...`):
 
 ```bash
-cd /var/www/seven-sport
-git pull
+sudo mkdir -p /opt/apps && cd /opt/apps
+git clone https://github.com/carlos50barbosa/seven-sport.git seven-sport
+cd seven-sport
 npm ci
-npm run build
+npm run build          # gera /opt/apps/seven-sport/out
 ```
 
-### 2. PM2
+Nas próximas vezes, o deploy inteiro é:
 
 ```bash
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup          # e rode o comando que ele imprimir
-pm2 logs seven-sport
+cd /opt/apps/seven-sport && git pull && npm ci && npm run build
 ```
 
-O app sobe na **porta 3000**. Se essa porta já estiver ocupada na VPS (o site da própria agência,
-por exemplo), troque em **dois lugares**: `ecosystem.config.js` e o `proxy_pass` do Nginx.
+Não precisa reiniciar nada. O Nginx passa a servir os arquivos novos na hora.
 
-### 3. Nginx — dentro do server block de servicostech.com.br
+### 2. Nginx
 
-Não é um `server` novo: são `location` acrescentados ao bloco que já existe.
+⚠ **Esta VPS é AlmaLinux/RHEL (`nginx/1.20.1`)**: não existe `sites-available` /
+`sites-enabled`. O `nginx.conf` inclui `/etc/nginx/conf.d/*.conf`, e é lá que o arquivo vai.
+Criar em `sites-available` falha de um jeito traiçoeiro: o `tee` reclama de diretório
+inexistente, mas o `nginx -t` seguinte passa (porque nada foi criado) e parece sucesso.
 
-```nginx
-# ---------- Seven Sport, em /seven-sport ----------
-
-# sem a barra final o Next devolve 404; redireciona antes de chegar nele
-location = /seven-sport {
-    return 301 /seven-sport/;
-}
-
-# assets com hash: cache imutável de 1 ano
-location /seven-sport/_next/static/ {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_cache_valid 200 365d;
-    add_header Cache-Control "public, max-age=31536000, immutable";
-}
-
-location /seven-sport/_next/image {
-    proxy_pass http://127.0.0.1:3000;
-    add_header Cache-Control "public, max-age=2592000";
-}
-
-location /seven-sport/ {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_cache_bypass $http_upgrade;
-    proxy_read_timeout 60s;
-}
-```
-
-⚠ **O `proxy_pass` não pode ter barra nem caminho no fim.**
-`proxy_pass http://127.0.0.1:3000;` preserva a URI inteira, com o `/seven-sport/` — que é
-exatamente o que o Next espera por causa do `basePath`.
-`proxy_pass http://127.0.0.1:3000/;` (com barra) corta o prefixo e **tudo vira 404**. É o erro
-mais comum de deploy em subpasta.
-
-Depois: `nginx -t && systemctl reload nginx`.
-
-### 4. HTTPS
-
-Nada a fazer: o certificado de `servicostech.com.br` já cobre a subpasta.
-
-### 5. ⚠ robots.txt — o passo que quase todo mundo esquece
-
-Crawler só lê `robots.txt` na **raiz do domínio**. O arquivo que este projeto gera fica em
-`https://servicostech.com.br/seven-sport/robots.txt` e **é ignorado**.
-
-Acrescente esta linha ao robots.txt de **servicostech.com.br** (na raiz):
-
-```
-Sitemap: https://servicostech.com.br/seven-sport/sitemap.xml
-```
-
-Sem isso o Google não descobre o sitemap do Seven Sport.
-
-### 6. Search Console
-
-Cadastre a propriedade como **prefixo de URL** `https://servicostech.com.br/seven-sport/`
-(não como domínio) e envie o sitemap por lá também.
-
-### ⚠ O custo de SEO de morar em subpasta
-
-O site é indexável e vai ranquear — mas a autoridade fica no domínio da agência, não no do
-cliente. **Quando migrar para `sevensport.com.br`, é obrigatório um 301** de cada URL antiga
-para a nova, mantido por pelo menos seis meses:
-
-```nginx
-location /seven-sport/ {
-    return 301 https://sevensport.com.br$request_uri;
-}
-```
-
-Como o `$request_uri` traz o `/seven-sport` junto, o redirect precisa reescrever o caminho:
-
-```nginx
-location /seven-sport/ {
-    rewrite ^/seven-sport/(.*)$ https://sevensport.com.br/$1 permanent;
-}
-```
-
-Quanto antes registrar o domínio, menos histórico há para migrar.
-
-## Migrar para sevensport.com.br — runbook
-
-O domínio foi registrado no Registro.br. Esta é a sequência para tirar o site da subpasta e
-colocá-lo no domínio próprio. **A ordem importa**: inverter os passos 1 e 4 derruba o site.
-
-**Estado verificado em 27/08/2026:**
-
-| Item | Situação |
-|---|---|
-| DNS (apex e www) | ✅ resolvendo em `82.25.77.26` |
-| Portas 80 e 443 | ✅ abertas |
-| App na porta 3000 | ✅ respondendo (é o que serve `/seven-sport/`) |
-| Server block de `sevensport.com.br` | ❌ não existe |
-| Certificado do domínio | ❌ não emitido |
-
-⚠ Por não existir server block, o TLS cai no **server padrão da VPS** (`agenda0.com.br`) e o
-certificado não bate com `sevensport.com.br`. Como há um redirect global de 80 para 443, hoje o
-visitante que digita o domínio recebe **erro de certificado no navegador** — pior do que o domínio
-não existir. Os passos 2 e 3 resolvem.
-
-### 1. DNS no Registro.br
-
-Em **Configurar zona DNS** (modo avançado), duas entradas do tipo `A`:
-
-| TIPO | NOME | DADOS |
-|---|---|---|
-| `A` | *(deixe em branco)* | `SEU.IP.DA.VPS` |
-| `A` | `www` | `SEU.IP.DA.VPS` |
-
-O campo NOME **vazio** é o domínio raiz (`sevensport.com.br`). O painel do Registro.br não aceita
-`@` — é por isso que se deixa em branco, e não porque falta alguma coisa.
-
-Salve e espere. O Registro.br costuma publicar em cerca de uma hora; a propagação completa pode
-levar até 24h. Confira antes de seguir:
-
-```bash
-dig +short sevensport.com.br @8.8.8.8
-dig +short www.sevensport.com.br @8.8.8.8
-```
-
-Os dois têm que responder o IP da VPS. **Não avance enquanto não responderem** — o Certbot falha
-se o DNS ainda não resolve, e falha repetida bate no limite de tentativas da Let's Encrypt.
-
-### 2. Nginx — server block novo, ainda em HTTP
-
-`/etc/nginx/sites-available/sevensport`:
+`/etc/nginx/conf.d/sevensport.conf`:
 
 ```nginx
 server {
@@ -377,34 +248,37 @@ server {
     listen [::]:80;
     server_name sevensport.com.br www.sevensport.com.br;
 
+    root /opt/apps/seven-sport/out;
+    index index.html;
+
+    # o Next exporta /uniformes como uniformes.html
+    location / {
+        try_files $uri $uri.html $uri/index.html =404;
+    }
+
+    # ⚠ O favicon e a imagem de OG são gerados SEM extensão. Sem estas duas
+    # linhas o Nginx entrega application/octet-stream e a prévia do link no
+    # WhatsApp e no Facebook não renderiza.
+    location = /icon            { default_type image/png; }
+    location = /opengraph-image { default_type image/png; }
+
+    # assets com hash no nome: cache imutável
+    location /_next/static/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /fotos/ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
+    error_page 404 /404.html;
+
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
-
-    location /_next/static/ {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_cache_valid 200 365d;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    location /_next/image {
-        proxy_pass http://127.0.0.1:3000;
-        add_header Cache-Control "public, max-age=2592000";
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 60s;
-    }
 
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -412,100 +286,58 @@ server {
 }
 ```
 
-⚠ **Esta VPS é AlmaLinux/RHEL (`nginx/1.20.1`)**: não existe `sites-available` /
-`sites-enabled`. O `nginx.conf` inclui `/etc/nginx/conf.d/*.conf`, e é lá que o arquivo tem
-de ficar — salve como `/etc/nginx/conf.d/sevensport.conf`.
-
-Criar em `sites-available` falha silenciosamente para quem não lê a saída: o `tee` reclama de
-diretório inexistente, mas o `nginx -t` logo em seguida passa (porque nada foi criado) e dá
-impressão de sucesso.
-
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
-
-# 200 aqui prova que o proxy funciona (o app ainda tem basePath)
-curl -s -o /dev/null -w "%{http_code}
-" http://sevensport.com.br/seven-sport/
-# 404 aqui é o esperado até o rebuild do passo 4
-curl -s -o /dev/null -w "%{http_code}
-" http://sevensport.com.br/
+curl -s -o /dev/null -w "%{http_code}\n" http://sevensport.com.br/            # 200
+curl -s -o /dev/null -w "%{http_code}\n" http://sevensport.com.br/uniformes   # 200
 ```
-
-Neste ponto `http://sevensport.com.br` já responde — mas ainda mostrando o site montado para a
-subpasta, com os links quebrados. É esperado; o passo 4 conserta.
 
 ### 3. HTTPS
-
-```bash
-sudo certbot --nginx -d sevensport.com.br -d www.sevensport.com.br
-sudo systemctl status certbot.timer   # renovação automática
-```
-
-Se o Certbot disser **"Successfully received certificate"** mas em seguida **"Could not install
-certificate — Could not automatically find a matching server block"**, o certificado está em
-disco e só faltou o server block do passo 2. Corrija o passo 2 e rode:
 
 ```bash
 sudo certbot install --cert-name sevensport.com.br
 ```
 
-`install` **não pede certificado novo** — só edita o Nginx para usar o que já existe. Não
-consome tentativa no limite da Let's Encrypt.
+`install` usa o certificado que **já está emitido** em `/etc/letsencrypt/live/sevensport.com.br/`
+— não pede um novo, então não consome tentativa no limite da Let's Encrypt (5/hora por domínio).
 
-O Certbot reescreve o server block sozinho, criando o bloco 443 e o redirect de 80 para 443.
-
-### 4. Rebuild do site + 301 da subpasta — no mesmo intervalo
-
-⚠ Estes dois andam juntos. Assim que o rebuild tirar o `basePath`, o app deixa de responder em
-`/seven-sport` — e a location antiga no Nginx da agência passa a dar 404 até virar o 301 do
-passo 6. Faça os dois na sequência, não em dias diferentes.
-
-Em `.env`, esvazie o basePath e troque a URL:
-
-```
-NEXT_PUBLIC_BASE_PATH=
-NEXT_PUBLIC_SITE_URL=https://sevensport.com.br
-```
-
-E em `ecosystem.config.js`, deixe as duas iguais.
+Se ainda não houver certificado:
 
 ```bash
-cd /var/www/seven-sport
-git pull
-npm ci
-npm run build
-pm2 restart seven-sport
+sudo certbot --nginx -d sevensport.com.br -d www.sevensport.com.br
 ```
 
-Confira que o site responde na raiz e que as imagens carregam:
+Se o Certbot disser *"Successfully received certificate"* seguido de *"Could not install
+certificate — Could not automatically find a matching server block"*, o certificado está em disco
+e faltou o passo 2. Corrija e rode o `install`.
 
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://sevensport.com.br/
-curl -s https://sevensport.com.br/ | grep -o 'rel="canonical" href="[^"]*"'
-```
+### 4. www → raiz
 
-O canonical tem que sair `https://sevensport.com.br` — sem `/seven-sport`.
-
-### 5. www → raiz
-
-Escolha um endereço só, senão o Google vê duas versões do mesmo site. No server block 443 que o
-Certbot criou, separe o `www`:
+Escolha um endereço só, senão o Google vê duas versões do mesmo site. No bloco 443 que o Certbot
+criou, separe o `www`:
 
 ```nginx
 server {
     listen 443 ssl;
     server_name www.sevensport.com.br;
-    # ... as linhas de ssl_certificate que o Certbot escreveu ...
+    # ... as linhas ssl_certificate que o Certbot escreveu ...
     return 301 https://sevensport.com.br$request_uri;
 }
 ```
 
 E tire `www.sevensport.com.br` do `server_name` do bloco principal.
 
-### 6. 301 da subpasta antiga — não pule
+### 5. Aposentar a prévia
 
-Quem já indexou ou salvou `servicostech.com.br/seven-sport` precisa chegar no lugar novo. No
-server block de **servicostech.com.br**, troque os `location /seven-sport*` por:
+A prévia do cliente ficou em `/var/www/servicostech.com.br/seven-sport` — uma pasta solta dentro
+do document root da agência, sem nenhuma linha de Nginx (é por isso que `grep seven-sport` na
+config não acha nada). Para não deixar cópia duplicada indexável:
+
+```bash
+sudo rm -rf /var/www/servicostech.com.br/seven-sport
+```
+
+E, no server block de `servicostech.com.br`, um redirect para quem tiver o link salvo:
 
 ```nginx
 location /seven-sport {
@@ -513,20 +345,13 @@ location /seven-sport {
 }
 ```
 
-Mantenha esse redirect por pelo menos seis meses. É ele que transfere para o domínio novo o
-histórico que o site acumulou na subpasta.
+### 6. Search Console
 
-### 7. robots.txt e Search Console
+Cadastre `sevensport.com.br` e envie `https://sevensport.com.br/sitemap.xml`.
+O `robots.txt` agora nasce na raiz e vale sozinho — quando o site morava na subpasta, ele era
+ignorado (crawler só lê robots na raiz do domínio).
 
-Agora o `robots.txt` nasce na raiz e já vale sozinho — a linha que foi acrescentada no robots de
-`servicostech.com.br` pode sair.
-
-No Search Console, cadastre `sevensport.com.br` (dá para validar por **propriedade de domínio**,
-com um TXT no Registro.br, ou por prefixo de URL) e envie
-`https://sevensport.com.br/sitemap.xml`. Na propriedade antiga, use a
-**Ferramenta de alteração de endereço** apontando para a nova.
-
-### 8. Atualize onde o endereço aparece fora do site
+### 7. Atualize onde o endereço aparece fora do site
 
 - Bio do Instagram `@seeven.sport`
 - Google Meu Negócio
@@ -536,26 +361,23 @@ com um TXT no Registro.br, ou por prefixo de URL) e envie
 
 | Sintoma | Causa quase certa |
 |---|---|
-| `ERR_NAME_NOT_RESOLVED` | DNS ainda não propagou — confira com o `dig` do passo 1 |
-| Site abre sem CSS, tudo 404 | Rebuild do passo 4 não foi feito, ou o `proxy_pass` tem barra no fim |
-| Certbot falha com "unauthorized" | DNS ainda não resolve, ou a porta 80 está fechada no firewall |
-| Imagens com 400 | `NEXT_PUBLIC_BASE_PATH` ficou preenchido no build |
+| `ERR_NAME_NOT_RESOLVED` | DNS não propagou. `dig +short sevensport.com.br @8.8.8.8` |
+| Erro de certificado no navegador | Falta o server block: o TLS cai no server padrão da VPS e entrega o certificado de outro domínio |
+| `/uniformes` dá 404 | Falta o `try_files ... $uri.html` |
+| Site abre sem CSS | `root` apontando para o repositório em vez de `.../out` |
+| Prévia do link sem imagem no WhatsApp | Faltam as duas linhas de `default_type image/png` |
+| Aparece o site de outro domínio | `proxy_pass` sobrando de uma tentativa anterior — este site não usa proxy |
 
-### Alternativa 100% estática (sem Node em produção)
+### Testar o `out/` antes de subir
 
-Se preferir servir só arquivos pelo Nginx, adicione `output: 'export'` e `images: { unoptimized: true }` no `next.config.mjs` e rode `npm run build`. A saída vai para `out/`, já com o `basePath` aplicado nos caminhos. Aponte o Nginx para ela:
+`scripts/servir-estatico.mjs` sobe um servidor local com as mesmas regras de `try_files` do
+Nginx, para conferir o build exatamente como a VPS vai servir:
 
-```nginx
-location /seven-sport/ {
-    alias /var/www/seven-sport/out/;
-    try_files $uri $uri.html $uri/index.html =404;
-}
+```bash
+npm run build
+node scripts/servir-estatico.mjs out 3200
+# http://127.0.0.1:3200
 ```
-
-Nesse cenário o PM2 não é necessário — mas some a otimização de imagem do `next/image`, e o site
-tem 1,3 MB de fotos. Prefira o modo com Node, a não ser que a VPS não possa manter um processo.
-
----
 
 ## Antes de publicar — pendências com o cliente
 

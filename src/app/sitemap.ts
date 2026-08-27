@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/data/site';
 
+/** Necessário com `output: 'export'`: gera o arquivo em build, não em runtime. */
+export const dynamic = 'force-static';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const rotas = [
     { caminho: '', prioridade: 1 },

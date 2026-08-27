@@ -5,6 +5,9 @@ export const alt = `${site.nome} — uniformes esportivos personalizados em ${si
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+/** Necessário com `output: 'export'`: a imagem é gerada em build. */
+export const dynamic = 'force-static';
+
 /**
  * OG image: a Prancha de Mockup sobre o verde escuro da marca.
  * Gerada em build — nenhuma requisição externa em runtime.

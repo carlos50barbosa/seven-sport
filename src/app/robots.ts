@@ -1,17 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/data/site';
 
+/** Necessário com `output: 'export'`: gera o arquivo em build, não em runtime. */
+export const dynamic = 'force-static';
+
 /**
- * ⚠ Rodando em subpasta, este arquivo é gerado em
- * https://servicostech.com.br/seven-sport/robots.txt — e robô nenhum lê ali.
- * Crawler só busca robots.txt na RAIZ do domínio.
- *
- * Ou seja: enquanto o site viver na subpasta, quem manda é o robots.txt de
- * servicostech.com.br. A linha do Sitemap precisa ser acrescentada lá
- * (instruções no README, em "Deploy em subpasta").
- *
- * Este arquivo continua aqui porque passa a valer sozinho no dia em que o
- * domínio próprio entrar — aí ele nasce na raiz e já sai correto.
+ * Gerado na raiz do domínio, que é onde crawler procura. Quando o site morava
+ * numa subpasta este arquivo era ignorado — o robots que valia era o do
+ * domínio hospedeiro. Não é mais o caso.
  */
 export default function robots(): MetadataRoute.Robots {
   const base = new URL(site.url);
