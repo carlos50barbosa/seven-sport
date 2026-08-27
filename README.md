@@ -412,9 +412,23 @@ server {
 }
 ```
 
+⚠ **Esta VPS é AlmaLinux/RHEL (`nginx/1.20.1`)**: não existe `sites-available` /
+`sites-enabled`. O `nginx.conf` inclui `/etc/nginx/conf.d/*.conf`, e é lá que o arquivo tem
+de ficar — salve como `/etc/nginx/conf.d/sevensport.conf`.
+
+Criar em `sites-available` falha silenciosamente para quem não lê a saída: o `tee` reclama de
+diretório inexistente, mas o `nginx -t` logo em seguida passa (porque nada foi criado) e dá
+impressão de sucesso.
+
 ```bash
-sudo ln -s /etc/nginx/sites-available/sevensport /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
+
+# 200 aqui prova que o proxy funciona (o app ainda tem basePath)
+curl -s -o /dev/null -w "%{http_code}
+" http://sevensport.com.br/seven-sport/
+# 404 aqui é o esperado até o rebuild do passo 4
+curl -s -o /dev/null -w "%{http_code}
+" http://sevensport.com.br/
 ```
 
 Neste ponto `http://sevensport.com.br` já responde — mas ainda mostrando o site montado para a
@@ -426,6 +440,17 @@ subpasta, com os links quebrados. É esperado; o passo 4 conserta.
 sudo certbot --nginx -d sevensport.com.br -d www.sevensport.com.br
 sudo systemctl status certbot.timer   # renovação automática
 ```
+
+Se o Certbot disser **"Successfully received certificate"** mas em seguida **"Could not install
+certificate — Could not automatically find a matching server block"**, o certificado está em
+disco e só faltou o server block do passo 2. Corrija o passo 2 e rode:
+
+```bash
+sudo certbot install --cert-name sevensport.com.br
+```
+
+`install` **não pede certificado novo** — só edita o Nginx para usar o que já existe. Não
+consome tentativa no limite da Let's Encrypt.
 
 O Certbot reescreve o server block sozinho, criando o bloco 443 e o redirect de 80 para 443.
 
