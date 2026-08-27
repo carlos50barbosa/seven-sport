@@ -324,6 +324,181 @@ location /seven-sport/ {
 
 Quanto antes registrar o domínio, menos histórico há para migrar.
 
+## Migrar para sevensport.com.br — runbook
+
+O domínio foi registrado no Registro.br. Esta é a sequência para tirar o site da subpasta e
+colocá-lo no domínio próprio. **A ordem importa**: inverter os passos 1 e 4 derruba o site.
+
+Substitua `SEU.IP.DA.VPS` pelo IP da VPS (hPanel → VPS → Visão geral → Endereço IP).
+
+### 1. DNS no Registro.br
+
+Em **Configurar zona DNS** (modo avançado), duas entradas do tipo `A`:
+
+| TIPO | NOME | DADOS |
+|---|---|---|
+| `A` | *(deixe em branco)* | `SEU.IP.DA.VPS` |
+| `A` | `www` | `SEU.IP.DA.VPS` |
+
+O campo NOME **vazio** é o domínio raiz (`sevensport.com.br`). O painel do Registro.br não aceita
+`@` — é por isso que se deixa em branco, e não porque falta alguma coisa.
+
+Salve e espere. O Registro.br costuma publicar em cerca de uma hora; a propagação completa pode
+levar até 24h. Confira antes de seguir:
+
+```bash
+dig +short sevensport.com.br @8.8.8.8
+dig +short www.sevensport.com.br @8.8.8.8
+```
+
+Os dois têm que responder o IP da VPS. **Não avance enquanto não responderem** — o Certbot falha
+se o DNS ainda não resolve, e falha repetida bate no limite de tentativas da Let's Encrypt.
+
+### 2. Nginx — server block novo, ainda em HTTP
+
+`/etc/nginx/sites-available/sevensport`:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name sevensport.com.br www.sevensport.com.br;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+    location /_next/static/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_cache_valid 200 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /_next/image {
+        proxy_pass http://127.0.0.1:3000;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/sevensport /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Neste ponto `http://sevensport.com.br` já responde — mas ainda mostrando o site montado para a
+subpasta, com os links quebrados. É esperado; o passo 4 conserta.
+
+### 3. HTTPS
+
+```bash
+sudo certbot --nginx -d sevensport.com.br -d www.sevensport.com.br
+sudo systemctl status certbot.timer   # renovação automática
+```
+
+O Certbot reescreve o server block sozinho, criando o bloco 443 e o redirect de 80 para 443.
+
+### 4. Rebuild do site para o domínio próprio
+
+Em `.env`, esvazie o basePath e troque a URL:
+
+```
+NEXT_PUBLIC_BASE_PATH=
+NEXT_PUBLIC_SITE_URL=https://sevensport.com.br
+```
+
+E em `ecosystem.config.js`, deixe as duas iguais.
+
+```bash
+cd /var/www/seven-sport
+git pull
+npm ci
+npm run build
+pm2 restart seven-sport
+```
+
+Confira que o site responde na raiz e que as imagens carregam:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://sevensport.com.br/
+curl -s https://sevensport.com.br/ | grep -o 'rel="canonical" href="[^"]*"'
+```
+
+O canonical tem que sair `https://sevensport.com.br` — sem `/seven-sport`.
+
+### 5. www → raiz
+
+Escolha um endereço só, senão o Google vê duas versões do mesmo site. No server block 443 que o
+Certbot criou, separe o `www`:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name www.sevensport.com.br;
+    # ... as linhas de ssl_certificate que o Certbot escreveu ...
+    return 301 https://sevensport.com.br$request_uri;
+}
+```
+
+E tire `www.sevensport.com.br` do `server_name` do bloco principal.
+
+### 6. 301 da subpasta antiga — não pule
+
+Quem já indexou ou salvou `servicostech.com.br/seven-sport` precisa chegar no lugar novo. No
+server block de **servicostech.com.br**, troque os `location /seven-sport*` por:
+
+```nginx
+location /seven-sport {
+    rewrite ^/seven-sport/?(.*)$ https://sevensport.com.br/$1 permanent;
+}
+```
+
+Mantenha esse redirect por pelo menos seis meses. É ele que transfere para o domínio novo o
+histórico que o site acumulou na subpasta.
+
+### 7. robots.txt e Search Console
+
+Agora o `robots.txt` nasce na raiz e já vale sozinho — a linha que foi acrescentada no robots de
+`servicostech.com.br` pode sair.
+
+No Search Console, cadastre `sevensport.com.br` (dá para validar por **propriedade de domínio**,
+com um TXT no Registro.br, ou por prefixo de URL) e envie
+`https://sevensport.com.br/sitemap.xml`. Na propriedade antiga, use a
+**Ferramenta de alteração de endereço** apontando para a nova.
+
+### 8. Atualize onde o endereço aparece fora do site
+
+- Bio do Instagram `@seeven.sport`
+- Google Meu Negócio
+- Cartão, adesivo de vitrine, etiqueta de uniforme
+
+### Se algo der errado
+
+| Sintoma | Causa quase certa |
+|---|---|
+| `ERR_NAME_NOT_RESOLVED` | DNS ainda não propagou — confira com o `dig` do passo 1 |
+| Site abre sem CSS, tudo 404 | Rebuild do passo 4 não foi feito, ou o `proxy_pass` tem barra no fim |
+| Certbot falha com "unauthorized" | DNS ainda não resolve, ou a porta 80 está fechada no firewall |
+| Imagens com 400 | `NEXT_PUBLIC_BASE_PATH` ficou preenchido no build |
+
 ### Alternativa 100% estática (sem Node em produção)
 
 Se preferir servir só arquivos pelo Nginx, adicione `output: 'export'` e `images: { unoptimized: true }` no `next.config.mjs` e rode `npm run build`. A saída vai para `out/`, já com o `basePath` aplicado nos caminhos. Aponte o Nginx para ela:
@@ -345,7 +520,8 @@ tem 1,3 MB de fotos. Prefira o modo com Node, a não ser que a VPS não possa ma
 - [ ] **Horário de funcionamento** — hoje `site.horarios.confirmado` está `false`, e a seção "Onde estamos" mostra "confirme pelo WhatsApp" em vez de anunciar um horário possivelmente errado. Confirme e mude para `true`.
 - [x] ~~CNPJ e razão social~~ — **confirmados em 26/08/2026**: Everaldo José do Nascimento - ME, CNPJ 16.990.883/0001-64. Aparecem no rodapé e no JSON-LD (`legalName` / `taxID`).
   Nota: a Receita registra em caixa alta e sem acento (`EVERALDO JOSE DO NASCIMENTO - ME`). O site usa a grafia com acento e caixa mista, que lê melhor no rodapé. Se preferir idêntico ao cartão CNPJ, é só trocar a string em `site.empresa.razaoSocial`.
-- [ ] **Domínio — VERIFICADO EM 25/08/2026, todos livres.** Registrar `sevensport.com.br` (principal) e `seevensport.com.br` (defesa, redirecionando — o Instagram é `@seeven.sport` com dois "e" e é assim que o cliente vai digitar). Checado por API do Registro.br + RDAP oficial + DNS, com controles. Registrar direto no registro.br. Detalhes e as outras quatro opções estão no comentário de `site.url`.
+- [x] ~~Domínio~~ — **`sevensport.com.br` registrado no Registro.br.** A migração da subpasta para ele está em "Migrar para sevensport.com.br — runbook", neste README. Falta apontar o DNS para o IP da VPS.
+- [ ] **`seevensport.com.br` como defesa** — o Instagram é `@seeven.sport`, com dois "e", e quem vier de lá vai digitar assim. Estava livre em 25/08. Vale registrar e redirecionar para o principal.
 - [ ] **`shipa` = chimpa?** Uma pergunta fecha: *"o shipa é aquele que por fora é lisinho e por dentro é felpudo?"*. Se sim, o texto publicado está certo. Pergunte junto se a bermuda usa a mesma chimpa do agasalho ou uma versão mais leve — muda o texto do produto.
 - [ ] **Patch 3D x emborrachado são a mesma coisa na loja?** Se forem, junte os dois num item só em `acabamentos.ts`: melhor três técnicas verdadeiras que quatro confusas.
 - [ ] **A loja faz transfer/DTF e silk?** São comuns em várzea e não estavam na lista do dono. Se faz, é só acrescentar em `escudos`.
