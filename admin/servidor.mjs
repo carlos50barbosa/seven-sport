@@ -494,6 +494,11 @@ const servidor = createServer(async (req, res) => {
 
   const resto = url.pathname.slice(config.base.length);
 
+  // HEAD é GET sem corpo, e o Node já corta o corpo sozinho ao responder a um
+  // HEAD. Tratar os dois igual evita que `curl -I` e monitor de disponibilidade
+  // caiam na checagem de sessão lá embaixo e leiam 401 como painel quebrado.
+  const leitura = req.method === 'GET' || req.method === 'HEAD';
+
   /**
    * `/admin` → `/admin/`, com redirect.
    *
@@ -501,7 +506,7 @@ const servidor = createServer(async (req, res) => {
    * diretório PAI — vira `/painel.js`, fora do painel, e a página carrega sem
    * CSS e sem JS. Sem erro visível: o formulário simplesmente não faz nada.
    */
-  if (resto === '' && req.method === 'GET') {
+  if (resto === '' && leitura) {
     res.writeHead(302, { location: `${config.base}/` });
     return res.end();
   }
@@ -539,8 +544,8 @@ const servidor = createServer(async (req, res) => {
     }
 
     // ---- páginas do painel (o HTML é público; quem guarda o conteúdo é a API)
-    if (req.method === 'GET' && (rota === '/' || rota === '')) return servirPainel(res, 'index.html');
-    if (req.method === 'GET' && (rota === '/painel.css' || rota === '/painel.js')) {
+    if (leitura && (rota === '/' || rota === '')) return servirPainel(res, 'index.html');
+    if (leitura && (rota === '/painel.css' || rota === '/painel.js')) {
       return servirPainel(res, rota.slice(1));
     }
 
@@ -597,7 +602,7 @@ const servidor = createServer(async (req, res) => {
      * build. Sem esta rota, toda imagem nova ficaria quebrada na tela até publicar,
      * bem na hora em que o admin precisa conferir se acertou a foto.
      */
-    if (rota === '/api/imagem' && req.method === 'GET') {
+    if (rota === '/api/imagem' && leitura) {
       const caminho = url.searchParams.get('caminho') ?? '';
       if (!/^\/(fotos|galeria)\/[\w.-]+$/.test(caminho)) {
         return responder(res, 400, { erro: 'caminho inválido' });
