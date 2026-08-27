@@ -329,7 +329,20 @@ Quanto antes registrar o domínio, menos histórico há para migrar.
 O domínio foi registrado no Registro.br. Esta é a sequência para tirar o site da subpasta e
 colocá-lo no domínio próprio. **A ordem importa**: inverter os passos 1 e 4 derruba o site.
 
-Substitua `SEU.IP.DA.VPS` pelo IP da VPS (hPanel → VPS → Visão geral → Endereço IP).
+**Estado verificado em 27/08/2026:**
+
+| Item | Situação |
+|---|---|
+| DNS (apex e www) | ✅ resolvendo em `82.25.77.26` |
+| Portas 80 e 443 | ✅ abertas |
+| App na porta 3000 | ✅ respondendo (é o que serve `/seven-sport/`) |
+| Server block de `sevensport.com.br` | ❌ não existe |
+| Certificado do domínio | ❌ não emitido |
+
+⚠ Por não existir server block, o TLS cai no **server padrão da VPS** (`agenda0.com.br`) e o
+certificado não bate com `sevensport.com.br`. Como há um redirect global de 80 para 443, hoje o
+visitante que digita o domínio recebe **erro de certificado no navegador** — pior do que o domínio
+não existir. Os passos 2 e 3 resolvem.
 
 ### 1. DNS no Registro.br
 
@@ -416,7 +429,11 @@ sudo systemctl status certbot.timer   # renovação automática
 
 O Certbot reescreve o server block sozinho, criando o bloco 443 e o redirect de 80 para 443.
 
-### 4. Rebuild do site para o domínio próprio
+### 4. Rebuild do site + 301 da subpasta — no mesmo intervalo
+
+⚠ Estes dois andam juntos. Assim que o rebuild tirar o `basePath`, o app deixa de responder em
+`/seven-sport` — e a location antiga no Nginx da agência passa a dar 404 até virar o 301 do
+passo 6. Faça os dois na sequência, não em dias diferentes.
 
 Em `.env`, esvazie o basePath e troque a URL:
 
