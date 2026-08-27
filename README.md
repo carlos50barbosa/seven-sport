@@ -476,12 +476,18 @@ cd /opt/apps/seven-sport && git pull && npm ci
 #    fotos e roda o build, os dois dentro desta pasta.
 ls -ld /opt/apps/seven-sport
 
-# 2. Credenciais. Num terminal de verdade — a senha é digitada escondida, e por
-#    isso não vai para o ~/.bash_history.
-npm run admin:senha
-sudo nano /etc/sevensport-admin.env          # cole só as três linhas ADMIN_*
+# 2. Credenciais, gravadas DIRETO no arquivo (modo 600, uma linha por variável).
+#    A senha é digitada escondida, e o hash e o segredo nunca aparecem na tela.
+#
+#    ⚠ NÃO faça por copia-e-cola. O hash tem ~150 caracteres; terminal e editor
+#    cortam ou quebram valor longo, e o arquivo fica com a variável VAZIA — três
+#    linhas, o "grep -c ADMIN_" respondendo 3, tudo com cara de certo, e o
+#    serviço subindo em laço com "Faltam credenciais".
+sudo node admin/senha.mjs --escrever /etc/sevensport-admin.env
 sudo chown root:root /etc/sevensport-admin.env
-sudo chmod 600 /etc/sevensport-admin.env
+
+#    Confira: 3 linhas, NENHUMA com menos de 20 chars (linha curta = valor perdido)
+sudo awk '{print NR": "length($0)" chars"}' /etc/sevensport-admin.env
 
 # 3. HOME do serviço, para o cache do npm durante o build.
 #    O dono TEM que ser o usuário do passo 1 — root aqui faz o build falhar com
