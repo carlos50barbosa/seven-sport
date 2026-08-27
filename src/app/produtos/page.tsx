@@ -8,7 +8,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { Localizacao } from '@/components/sections/Localizacao';
-import { produtos } from '@/data/produtos';
+import { produtos } from '@/data/conteudo';
 import { mensagens, site } from '@/data/site';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { asset } from '@/lib/asset';

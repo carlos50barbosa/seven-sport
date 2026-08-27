@@ -3,7 +3,8 @@ import { Reveal } from '@/components/ui/Reveal';
 import { MockupBoard } from '@/components/ui/MockupBoard';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
-import { mostrarNomeDosTimes, portfolio } from '@/data/portfolio';
+import { mostrarNomeDosTimes } from '@/data/portfolio';
+import { portfolio } from '@/data/conteudo';
 import { mensagens } from '@/data/site';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 

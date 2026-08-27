@@ -1,6 +1,21 @@
 import type { PadraoCamisa, CoresUniforme } from '@/components/ui/KitSvg';
 
 /**
+ * SEMENTE do conteúdo visual — os valores com que o site nasce.
+ *
+ * Quem lê isto aqui direto vê o estado ORIGINAL, não o que está no ar: assim que
+ * o painel do admin salva pela primeira vez, `dados/galeria.json` passa a mandar
+ * e estas listas viram só o ponto de partida. Por isso os nomes terminam em
+ * `Seed` — para o import errado não compilar em silêncio.
+ *
+ * Página e seção devem importar de `@/data/conteudo`, que junta as duas fontes.
+ *
+ * Este arquivo é CLIENT-SAFE de propósito (a MockupBoard é 'use client' e importa
+ * `Uniforme` e `mostrarNomeDosTimes` daqui). Não acrescente `node:fs` nele — a
+ * leitura de disco mora em `conteudo.ts`, que só server component importa.
+ */
+
+/**
  * Mostrar ou não o nome do time em cada prancha do portfólio.
  *
  * Recomendação: manter `true`. O nome do time é a prova social da galeria —
@@ -44,10 +59,11 @@ export type Uniforme = {
  * São marcas registradas de terceiros e ficaram de fora de propósito.
  * Detalhe no README, em "Fotos que não entraram".
  *
- * Para adicionar um time novo: recorte a foto em `scripts/preparar-imagens.mjs`,
- * rode o script e acrescente uma linha aqui.
+ * Para adicionar um time novo o caminho normal é o PAINEL (/admin): ele recorta,
+ * converte para WebP e publica sozinho. Mexer aqui só muda com que conteúdo uma
+ * instalação nova nasce — não altera o site que já tem `dados/galeria.json`.
  */
-export const portfolio: Uniforme[] = [
+export const portfolioSeed: Uniforme[] = [
   {
     slug: 'gremio-cacimbinha',
     time: 'Grêmio Cacimbinha',
@@ -93,7 +109,7 @@ export const portfolio: Uniforme[] = [
 ];
 
 /** Uniforme de empresa — vive na seção corporativa de /uniformes. */
-export const uniformeCorporativo: Uniforme = {
+export const uniformeCorporativoSeed: Uniforme = {
   slug: 'margirius',
   time: 'Margirius',
   contexto: 'Uniforme de empresa',
@@ -104,7 +120,7 @@ export const uniformeCorporativo: Uniforme = {
 };
 
 /** Destaque da página de uniformes. */
-export const uniformeDestaque: Uniforme = {
+export const uniformeDestaqueSeed: Uniforme = {
   slug: 'arruma-nada',
   time: 'Arruma Nada FC',
   contexto: 'Campo · com patrocínio',
@@ -112,7 +128,14 @@ export const uniformeDestaque: Uniforme = {
 };
 
 /** A prancha que o cliente recebe no WhatsApp, do jeito que a loja envia. */
-export const pranchaExemplo = {
+export type PranchaExemplo = {
+  src: string;
+  alt: string;
+  largura: number;
+  altura: number;
+};
+
+export const pranchaExemploSeed: PranchaExemplo = {
   src: '/fotos/prancha-exemplo.webp',
   alt: 'Arte digital do uniforme do time Amigos do Gole: frente e costas lado a lado, com escudo, patrocinadores, nome e número, do jeito que a Seven Sport envia no WhatsApp antes de produzir.',
   largura: 1400,

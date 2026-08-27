@@ -4,7 +4,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { mensagens } from '@/data/site';
-import { pranchaExemplo } from '@/data/portfolio';
+import { pranchaExemplo } from '@/data/conteudo';
 import { asset } from '@/lib/asset';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 

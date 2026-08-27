@@ -4,7 +4,7 @@ import { Logo } from '@/components/ui/Logo';
 import { MockupBoard } from '@/components/ui/MockupBoard';
 import { ThreadsIcon, WhatsAppIcon } from '@/components/ui/Icons';
 import { mensagens, site } from '@/data/site';
-import { portfolio } from '@/data/portfolio';
+import { portfolio } from '@/data/conteudo';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 const paginas = [

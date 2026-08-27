@@ -1,0 +1,114 @@
+{
+  "portfolio": [
+    {
+      "slug": "gremio-cacimbinha",
+      "time": "Grêmio Cacimbinha",
+      "contexto": "Futebol de campo",
+      "foto": {
+        "frente": "/fotos/gremio-cacimbinha.webp"
+      }
+    },
+    {
+      "slug": "santa-isabel",
+      "time": "Santa Isabel",
+      "contexto": "Futebol de campo",
+      "foto": {
+        "frente": "/fotos/santa-isabel.webp"
+      }
+    },
+    {
+      "slug": "ferroviario-carnaiba",
+      "time": "Ferroviário Carnaíba",
+      "contexto": "Enviado para PE",
+      "foto": {
+        "frente": "/fotos/ferroviario-frente.webp",
+        "costas": "/fotos/ferroviario-costas.webp"
+      }
+    },
+    {
+      "slug": "amigos-do-gole",
+      "time": "Amigos do Gole",
+      "contexto": "Com patrocínio",
+      "foto": {
+        "frente": "/fotos/amigos-do-gole-frente.webp",
+        "costas": "/fotos/amigos-do-gole-costas.webp"
+      }
+    },
+    {
+      "slug": "laranjo-fc",
+      "time": "Laranjo FC",
+      "contexto": "Veteranos · campo",
+      "foto": {
+        "frente": "/fotos/laranjo-fc.webp"
+      }
+    },
+    {
+      "slug": "erem-jms",
+      "time": "EREM JMS",
+      "contexto": "Escola de ensino médio",
+      "foto": {
+        "frente": "/fotos/erem-jms.webp"
+      }
+    }
+  ],
+  "uniformeDestaque": {
+    "slug": "arruma-nada",
+    "time": "Arruma Nada FC",
+    "contexto": "Campo · com patrocínio",
+    "foto": {
+      "frente": "/fotos/arruma-nada.webp"
+    }
+  },
+  "uniformeCorporativo": {
+    "slug": "margirius",
+    "time": "Margirius",
+    "contexto": "Uniforme de empresa",
+    "foto": {
+      "frente": "/fotos/margirius-frente.webp",
+      "costas": "/fotos/margirius-costas.webp"
+    }
+  },
+  "pranchaExemplo": {
+    "src": "/fotos/prancha-exemplo.webp",
+    "alt": "Arte digital do uniforme do time Amigos do Gole: frente e costas lado a lado, com escudo, patrocinadores, nome e número, do jeito que a Seven Sport envia no WhatsApp antes de produzir.",
+    "largura": 1400,
+    "altura": 1078
+  },
+  "produtos": [
+    {
+      "slug": "uniformes-esportivos",
+      "nome": "Uniformes esportivos",
+      "foto": null
+    },
+    {
+      "slug": "agasalhos",
+      "nome": "Agasalhos esportivos",
+      "foto": null
+    },
+    {
+      "slug": "bermudas",
+      "nome": "Bermudas de passeio",
+      "foto": null
+    },
+    {
+      "slug": "corporativo",
+      "nome": "Uniformes corporativos",
+      "foto": null
+    },
+    {
+      "slug": "bolas",
+      "nome": "Bolas de futebol",
+      "foto": "/fotos/bola-society.webp"
+    },
+    {
+      "slug": "chuteiras-tenis",
+      "nome": "Chuteiras e tênis",
+      "foto": null
+    },
+    {
+      "slug": "meioes",
+      "nome": "Meiões de futebol",
+      "foto": null
+    }
+  ]
+}
