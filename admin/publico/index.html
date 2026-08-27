@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Painel interno: fora do ar público e fora de buscador. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Painel · Seven Sport</title>
+    <link rel="stylesheet" href="painel.css" />
+  </head>
+  <body>
+    <!-- ── entrada ────────────────────────────────────────────────────────── -->
+    <main id="tela-login" class="login">
+      <form id="form-login" class="cartao-login" autocomplete="on">
+        <p class="marca"><span>SEVEN</span> SPORT</p>
+        <h1>Painel das fotos</h1>
+        <p class="ajuda">Aqui você troca, tira e acrescenta as imagens do site.</p>
+
+        <label for="usuario">Usuário</label>
+        <input id="usuario" name="username" autocomplete="username" required />
+
+        <label for="senha">Senha</label>
+        <input id="senha" name="password" type="password" autocomplete="current-password" required />
+
+        <p id="erro-login" class="erro" role="alert" hidden></p>
+        <button type="submit" class="botao principal">Entrar</button>
+      </form>
+    </main>
+
+    <!-- ── painel ─────────────────────────────────────────────────────────── -->
+    <div id="tela-painel" hidden>
+      <header class="topo">
+        <p class="marca"><span>SEVEN</span> SPORT</p>
+        <div class="topo-acoes">
+          <span id="estado" class="etiqueta"></span>
+          <button id="btn-salvar" class="botao" type="button" disabled>Salvar</button>
+          <button id="btn-publicar" class="botao principal" type="button">Publicar no site</button>
+          <button id="btn-sair" class="botao fantasma" type="button" title="Sair do painel">Sair</button>
+        </div>
+      </header>
+
+      <nav class="abas" role="tablist">
+        <button class="aba ativa" role="tab" data-painel="galeria" type="button">Galeria</button>
+        <button class="aba" role="tab" data-painel="destaques" type="button">Destaques</button>
+        <button class="aba" role="tab" data-painel="produtos" type="button">Produtos</button>
+      </nav>
+
+      <main class="conteudo">
+        <section id="painel-galeria" class="painel">
+          <div class="cabecalho-secao">
+            <div>
+              <h2>Uniformes da galeria</h2>
+              <p class="ajuda">
+                É a seção “Uniformes que já saíram daqui”, na home e na página de uniformes. A
+                ordem aqui é a ordem lá — e o primeiro da lista também aparece no topo do site e
+                no rodapé.
+              </p>
+            </div>
+            <button id="btn-novo-time" class="botao" type="button">+ Novo time</button>
+          </div>
+          <div id="lista-galeria" class="lista"></div>
+        </section>
+
+        <section id="painel-destaques" class="painel" hidden>
+          <div class="cabecalho-secao">
+            <div>
+              <h2>Destaques</h2>
+              <p class="ajuda">
+                Três imagens de posição fixa no site. Dá para trocar a foto e o texto, mas não
+                dá para remover: o layout conta com elas.
+              </p>
+            </div>
+          </div>
+          <div id="lista-destaques" class="lista"></div>
+        </section>
+
+        <section id="painel-produtos" class="painel" hidden>
+          <div class="cabecalho-secao">
+            <div>
+              <h2>Fotos do catálogo</h2>
+              <p class="ajuda">
+                Uma foto por categoria da página /produtos. Sem foto, o site desenha a peça em
+                vetor — que é um resultado digno, não um buraco. Só troque quando a foto real
+                ficar melhor que o desenho.
+              </p>
+            </div>
+          </div>
+          <div id="lista-produtos" class="lista"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ── publicação ─────────────────────────────────────────────────────── -->
+    <dialog id="dialogo-publicar">
+      <h2 id="titulo-publicar">Publicando…</h2>
+      <p id="resumo-publicar" class="ajuda"></p>
+      <pre id="log-publicar" class="log" aria-live="polite"></pre>
+      <button id="btn-fechar-publicar" class="botao" type="button">Fechar</button>
+    </dialog>
+
+    <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+
+    <script src="painel.js" type="module"></script>
+  </body>
+</html>

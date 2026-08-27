@@ -7,3 +7,9 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 out/
+
+# Conteúdo gerenciado pelo painel do admin (/admin), fora do git de propósito:
+# a VPS edita estes caminhos e o `git pull` do deploy não pode conflitar com eles.
+# Backup é por rsync da pasta dados/ — veja "Painel do admin" no README.
+dados/
+public/galeria/

@@ -1,0 +1,54 @@
+# Serviço do painel do admin da Seven Sport.
+#
+# Instalar na VPS:
+#   sudo cp admin/sevensport-admin.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sevensport-admin
+#
+# Conferir:  systemctl status sevensport-admin
+# Log:       journalctl -u sevensport-admin -f
+#
+# ⚠ Ajuste `User=` para o dono de /opt/apps/seven-sport (confira com `ls -ld`).
+#   O serviço PRECISA poder escrever no diretório do projeto: ele grava as fotos
+#   e roda o `npm run build`, que reescreve .next/ e out/.
+
+[Unit]
+Description=Painel do admin da Seven Sport (fotos do site)
+Documentation=https://github.com/carlos50barbosa/seven-sport
+After=network.target
+
+[Service]
+Type=simple
+User=nginx
+Group=nginx
+WorkingDirectory=/opt/apps/seven-sport
+
+# Usuário, hash da senha e segredo do cookie. Gere com `npm run admin:senha`.
+# Deixe o arquivo com dono root e modo 600 — ele é a chave do painel:
+#   sudo chown root:root /etc/sevensport-admin.env && sudo chmod 600 /etc/sevensport-admin.env
+EnvironmentFile=/etc/sevensport-admin.env
+
+# HOME próprio: sem isto o npm tenta escrever cache no home do usuário do serviço,
+# que o ProtectHome abaixo esconde — e o build falha com um erro de permissão
+# que não parece ter nada a ver com o motivo real.
+Environment=HOME=/var/lib/sevensport-admin
+
+ExecStart=/usr/bin/node admin/servidor.mjs
+Restart=on-failure
+RestartSec=5s
+
+# ── endurecimento ───────────────────────────────────────────────────────────
+# O painel recebe upload da internet: vale limitar o estrago de uma falha nele.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+# As duas únicas pastas que o serviço escreve.
+ReadWritePaths=/opt/apps/seven-sport /var/lib/sevensport-admin
+
+[Install]
+WantedBy=multi-user.target

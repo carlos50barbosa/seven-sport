@@ -3,7 +3,7 @@ import { MockupBoard } from '@/components/ui/MockupBoard';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { mensagens, site } from '@/data/site';
-import { portfolio } from '@/data/portfolio';
+import { portfolio } from '@/data/conteudo';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 const provas = [

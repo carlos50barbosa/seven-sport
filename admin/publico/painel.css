@@ -1,0 +1,347 @@
+/*
+ * Painel do admin — mesma paleta de `tailwind.config.ts`, escrita à mão.
+ *
+ * Sem Tailwind aqui de propósito: o painel é servido pelo Node, fora do build do
+ * Next. Puxar o Tailwind para cá significaria um segundo pipeline de build para
+ * três telas. São ~300 linhas de CSS; o custo de manter é menor que o da esteira.
+ *
+ * Feito para o CELULAR primeiro: quem usa isto é o dono da loja, com o telefone
+ * na mão, no balcão. Alvos de toque de 44px, uma coluna, nada de hover essencial.
+ */
+
+:root {
+  --verde: #1b8f3a;
+  --verde-forte: #15722f;
+  --vermelho: #e1251b;
+  --dourado-escuro: #8a6b1f;
+  --osso: #f4f5f3;
+  --carvao: #14181b;
+  --carvao-claro: #4a5257;
+  --borda: rgba(20, 24, 27, 0.14);
+  --sombra: 0 1px 2px rgba(20, 24, 27, 0.06), 0 8px 24px rgba(20, 24, 27, 0.06);
+  --raio: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/*
+ * O atributo `hidden` só vale como `display: none` na folha do navegador, que
+ * QUALQUER regra de autor com `display` derruba — e o `.login` abaixo é grid.
+ * Sem este !important, a tela de login continua na página depois de entrar.
+ */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--osso);
+  color: var(--carvao);
+  font: 400 1rem/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+h1 { font-size: 1.45rem; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+
+/* A marca no letreiro condensado do site, com as condensadas locais de fallback. */
+.marca {
+  margin: 0;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.marca span { color: var(--verde-forte); }
+
+.ajuda {
+  margin: 0.35rem 0 0;
+  color: var(--carvao-claro);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.erro {
+  margin: 0.75rem 0 0;
+  color: var(--vermelho);
+  font-size: 0.875rem;
+}
+
+/* ── botões ───────────────────────────────────────────────────────────────── */
+
+.botao {
+  min-height: 44px;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--carvao);
+  border-radius: var(--raio);
+  background: #fff;
+  color: var(--carvao);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+}
+.botao:hover:not(:disabled) { background: var(--carvao); color: #fff; }
+.botao:disabled { opacity: 0.4; cursor: not-allowed; }
+.botao:focus-visible { outline: 2px solid var(--verde-forte); outline-offset: 2px; }
+
+.botao.principal { background: var(--verde-forte); border-color: var(--verde-forte); color: #fff; }
+.botao.principal:hover:not(:disabled) { background: var(--carvao); border-color: var(--carvao); }
+
+.botao.fantasma { border-color: transparent; color: var(--carvao-claro); }
+.botao.fantasma:hover { background: transparent; color: var(--carvao); text-decoration: underline; }
+
+.botao.perigo { border-color: var(--vermelho); color: var(--vermelho); }
+.botao.perigo:hover:not(:disabled) { background: var(--vermelho); border-color: var(--vermelho); color: #fff; }
+
+.botao.miudo { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.8125rem; }
+
+/* ── entrada ──────────────────────────────────────────────────────────────── */
+
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 1.25rem;
+}
+
+.cartao-login {
+  width: 100%;
+  max-width: 25rem;
+  padding: 2rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+  box-shadow: var(--sombra);
+}
+.cartao-login h1 { margin-top: 1.25rem; }
+.cartao-login label {
+  display: block;
+  margin: 1.25rem 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--carvao-claro);
+}
+.cartao-login .botao { width: 100%; margin-top: 1.5rem; }
+
+input,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+  color: var(--carvao);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+input:focus,
+textarea:focus { outline: 2px solid var(--verde-forte); outline-offset: -1px; border-color: transparent; }
+textarea { min-height: 5.5rem; resize: vertical; line-height: 1.5; }
+
+/* ── topo ─────────────────────────────────────────────────────────────────── */
+
+.topo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: #fff;
+}
+.topo .marca { margin-right: auto; }
+.topo-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+
+.etiqueta {
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--osso);
+  color: var(--carvao-claro);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.etiqueta.pendente { background: #fdf3d6; color: var(--dourado-escuro); }
+.etiqueta.limpo { background: #e4f4e8; color: var(--verde-forte); }
+
+/* ── abas ─────────────────────────────────────────────────────────────────── */
+
+.abas {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: #fff;
+  overflow-x: auto;
+}
+.aba {
+  min-height: 44px;
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--carvao-claro);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.aba.ativa { border-bottom-color: var(--verde-forte); color: var(--carvao); }
+.aba:focus-visible { outline: 2px solid var(--verde-forte); outline-offset: -2px; }
+
+/* ── conteúdo ─────────────────────────────────────────────────────────────── */
+
+.conteudo { max-width: 60rem; margin: 0 auto; padding: 1.25rem 1rem 5rem; }
+
+.cabecalho-secao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.cabecalho-secao .ajuda { max-width: 46ch; }
+
+.lista { display: grid; gap: 1rem; }
+
+.ficha {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+  box-shadow: var(--sombra);
+}
+@media (min-width: 40rem) {
+  .ficha { grid-template-columns: auto 1fr; align-items: start; }
+}
+
+.fotos { display: flex; gap: 0.75rem; }
+
+/* Envelope do quadro: existe só para o <input type=file> ficar irmão do botão,
+   e não dentro dele. Não desenha nada — encolhe até o tamanho do botão. */
+.quadro { display: inline-flex; }
+
+/* Alvo de upload: clicar abre o seletor, arrastar solta em cima. */
+.solta {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 7.5rem;
+  height: 9.5rem;
+  padding: 0;
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio);
+  background: var(--osso);
+  color: var(--carvao-claro);
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+.solta:hover, .solta:focus-visible { border-color: var(--verde-forte); color: var(--verde-forte); outline: none; }
+.solta.sobre { border-color: var(--verde-forte); border-style: solid; background: #e4f4e8; }
+.solta img { width: 100%; height: 100%; object-fit: contain; }
+.solta.enviando { opacity: 0.5; pointer-events: none; }
+
+.rotulo-foto {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.2rem;
+  background: rgba(20, 24, 27, 0.72);
+  color: #fff;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.campos { display: grid; gap: 0.75rem; }
+.campo label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--carvao-claro);
+}
+@media (min-width: 30rem) {
+  .campos.duplo { grid-template-columns: 1fr 1fr; }
+}
+
+.acoes-ficha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--borda);
+  margin-top: 0.25rem;
+}
+.acoes-ficha .espaco { margin-left: auto; }
+
+/* ── publicação ───────────────────────────────────────────────────────────── */
+
+dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+  color: var(--carvao);
+}
+dialog::backdrop { background: rgba(20, 24, 27, 0.55); }
+
+.log {
+  max-height: 45vh;
+  margin: 1rem 0;
+  padding: 0.85rem;
+  border-radius: var(--raio);
+  background: var(--carvao);
+  color: #d7dbdd;
+  font: 400 0.8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
+/* ── aviso flutuante ──────────────────────────────────────────────────────── */
+
+.aviso {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  z-index: 50;
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem 1.1rem;
+  transform: translateX(-50%);
+  border-radius: var(--raio);
+  background: var(--carvao);
+  color: #fff;
+  font-size: 0.9375rem;
+  box-shadow: var(--sombra);
+}
+.aviso.ruim { background: var(--vermelho); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

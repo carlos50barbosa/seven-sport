@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "admin": "node admin/servidor.mjs",
+    "admin:senha": "node admin/senha.mjs",
+    "admin:semear": "node scripts/semear-conteudo.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

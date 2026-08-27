@@ -11,7 +11,7 @@ import { Galeria } from '@/components/sections/Galeria';
 import { Processo } from '@/components/sections/Processo';
 import { Orcamento } from '@/components/sections/Orcamento';
 import { mensagens, site } from '@/data/site';
-import { uniformeCorporativo, uniformeDestaque } from '@/data/portfolio';
+import { uniformeCorporativo, uniformeDestaque } from '@/data/conteudo';
 import { escudos, tecidos } from '@/data/acabamentos';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 

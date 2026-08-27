@@ -29,7 +29,8 @@ O site **não vende**: ele existe para transformar visitante em conversa qualifi
 | Fontes | `next/font/google` (self-hosted, sem CDN em runtime) |
 | Ícones | `lucide-react` |
 | Animação | CSS + `IntersectionObserver` próprio (sem framer-motion) |
-| Backend | nenhum — `output: 'export'`, o Nginx serve arquivo |
+| Backend | nenhum no site — `output: 'export'`, o Nginx serve arquivo |
+| Painel do admin | serviço Node à parte, só em `/admin` — veja "Painel do admin" |
 
 Zero dependência externa em runtime. A única requisição a terceiros é o `iframe` do Google Maps, com `loading="lazy"`.
 
@@ -58,6 +59,10 @@ Nenhum componente tem telefone ou endereço escrito à mão — alterou aqui, al
 Também ficam aqui as **mensagens de WhatsApp por contexto** (`mensagens`): a do hero é diferente da do formulário, da galeria, do botão flutuante etc.
 
 ### Imagens do cliente — `scripts/preparar-imagens.mjs`
+
+> Para trocar uma foto no dia a dia, o caminho é o **painel do admin** (`/admin`), que converte
+> sozinho e publica. Este script continua sendo o caminho do **recorte fino** e do lote inicial —
+> é ele que sabe onde cortar cada foto para tirar o balcão da loja e a moldura da prancha.
 
 As fotos originais **não** ficam no repositório: o script recorta, redimensiona e converte para
 WebP direto da pasta que o dono enviou.
@@ -88,6 +93,13 @@ vira sujeira. ⚠ O dono usa **quatro variantes** de logo nos materiais (duas es
 em alta e sem fundo. Vale ele confirmar qual é a oficial.
 
 ### Portfólio — `src/data/portfolio.ts`
+
+⚠ **Este arquivo é a semente, não o conteúdo no ar.** Ele diz com que galeria uma instalação
+nova nasce. Assim que o painel do admin salva pela primeira vez, `dados/galeria.json` passa a
+mandar e mexer aqui não muda mais o site — por isso os nomes exportados terminam em `Seed`.
+Quem junta as duas fontes é `src/data/conteudo.ts`, e é de lá que página e seção importam.
+
+Para acrescentar ou remover time, use `/admin`. O que segue vale para a semente.
 
 `mostrarNomeDosTimes` (topo do arquivo) liga e desliga o nome dos times na galeria.
 **Recomendação: manter `true`.** O nome do time é a prova social da seção — sem ele o card vira
@@ -160,9 +172,16 @@ src/
     sections/ Hero · Servicos · Galeria · Processo · Diferenciais · Orcamento · Localizacao
     ui/       MockupBoard (assinatura) · KitSvg · DesenhoProduto · Amostras
               Logo · Button · SectionTitle · Reveal · Icons
-  data/       site.ts · portfolio.ts · produtos.ts · acabamentos.ts
+  data/       site.ts · acabamentos.ts
+              portfolio.ts · produtos.ts   semente: com que conteúdo o site nasce
+              conteudo.ts                  junta a semente com dados/galeria.json (build)
   lib/        whatsapp.ts · asset.ts
+admin/        servidor.mjs · senha.mjs · publico/ (o painel) · semente.json
+              sevensport-admin.service (unit do systemd)
+dados/        conteúdo editável, FORA do git — criado pelo painel
 scripts/      preparar-imagens.mjs (recorta as fotos do cliente)
+              semear-conteudo.mjs  (atualiza admin/semente.json)
+              servir-estatico.mjs  (testa o out/ como o Nginx serve)
 ```
 
 ---
@@ -187,7 +206,23 @@ scripts/      preparar-imagens.mjs (recorta as fotos do cliente)
    máquina é servir pasta buildada (`/opt/apps/*/dist`), e a porta 3000 já é de outro projeto.
    Um processo Node a mais só acrescentaria coisa para cair. O site não tem nada dinâmico, então
    o export não custa funcionalidade — custa a otimização de imagem em runtime, compensada por
-   já gerar as fotos no tamanho certo. `ecosystem.config.js` foi removido: não há processo.
+   já gerar as fotos no tamanho certo. `ecosystem.config.js` foi removido: nenhum processo Node
+   fica no caminho do visitante. (O painel do admin, item 6, é um processo — mas ele só atende
+   `/admin`, e o site não depende dele para nada.)
+
+6. **Painel do admin com rebuild, não com galeria dinâmica** — o cliente precisa trocar as fotos
+   sozinho, e isso pedia um servidor onde não havia nenhum. A saída óbvia seria a galeria buscar
+   um JSON no navegador: mudança instantânea, sem build. Foi recusada — o Google passaria a ver
+   a seção vazia e o LCP pioraria, justamente na seção que é a prova social da loja.
+
+   O painel salva o conteúdo e dispara `npm run build`. O HTML publicado sai idêntico ao de um
+   deploy manual; o que muda é quem apertou o botão. Custa ~1 min de espera e um processo a mais
+   na VPS, e mantém intactas as duas coisas que o item 5 comprou.
+
+   O conteúdo editável vive em `dados/`, **fora do git**, e não em `src/data/`. Se ficasse dentro,
+   toda foto trocada pelo dono deixaria a árvore suja e o `git pull` do deploy seguinte falharia
+   por conflito — um jeito silencioso de quebrar o deploy semanas depois. O preço é que o backup
+   de `dados/` passa a ser responsabilidade de quem opera a VPS, não do git.
 
 ---
 
@@ -233,6 +268,9 @@ cd /opt/apps/seven-sport && git pull && npm ci && npm run build
 
 Não precisa reiniciar nada. O Nginx passa a servir os arquivos novos na hora.
 
+A exceção é o painel do admin: ele roda como serviço, então mudança em `admin/` só vale
+depois de `sudo systemctl restart sevensport-admin`.
+
 ### 2. Nginx
 
 ⚠ **Esta VPS é AlmaLinux/RHEL (`nginx/1.20.1`)**: não existe `sites-available` /
@@ -271,6 +309,29 @@ server {
     location /fotos/ {
         expires 30d;
         add_header Cache-Control "public, max-age=2592000";
+    }
+
+    # Fotos enviadas pelo painel. O nome de cada arquivo carrega o hash do
+    # conteúdo, então cache longo aqui nunca mostra a foto antiga.
+    location /galeria/ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
+    # Painel do admin — o ÚNICO lugar do site que fala com um processo Node.
+    location /admin {
+        proxy_pass http://127.0.0.1:4123;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # Sem esta linha o cookie de sessão sai sem `Secure` e o login entra em loop.
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Foto de celular passa fácil de 1 MB, que é o teto padrão do Nginx.
+        client_max_body_size 26m;
+        # O build demora ~1 min: não derrube a conexão do painel no meio.
+        proxy_read_timeout 300s;
     }
 
     error_page 404 /404.html;
@@ -378,6 +439,159 @@ npm run build
 node scripts/servir-estatico.mjs out 3200
 # http://127.0.0.1:3200
 ```
+
+## Painel do admin — `/admin`
+
+O dono da loja troca, tira e acrescenta as fotos do site pelo navegador, do celular, sem
+código e sem deploy. `https://sevensport.com.br/admin`.
+
+### Como isso convive com o site estático
+
+O site **continua 100% estático**. Nenhum visitante toca em Node: o Nginx serve `out/`, como
+sempre. O painel é um processo separado que só responde em `/admin`, e o que ele faz ao salvar é
+rodar **o mesmo `npm run build` do deploy**. O HTML publicado sai idêntico ao que sairia se você
+tivesse editado o arquivo à mão — SEO, LCP e a decisão de "sem Node no caminho do visitante"
+ficam de pé.
+
+O que se paga por isso:
+
+| | |
+|---|---|
+| **Custo** | ~1 min entre clicar em Publicar e a mudança aparecer no ar |
+| **Custo** | um processo a mais na VPS (~60 MB parado) |
+| **Não custa** | se o painel cair, o site **não** cai — ele só serve arquivo |
+| **Não custa** | nenhuma requisição do visitante passa pelo Node |
+
+A alternativa seria a galeria buscar um JSON em runtime: apareceria na hora, mas o Google
+passaria a ver a seção vazia e o carregamento ficaria mais lento. Não valeu o troco.
+
+### Instalação na VPS (uma vez)
+
+```bash
+cd /opt/apps/seven-sport && git pull && npm ci
+
+# 1. Credenciais. Rode num terminal de verdade — a senha é digitada escondida.
+npm run admin:senha
+#    Cole a saída em /etc/sevensport-admin.env e tranque o arquivo:
+sudo chown root:root /etc/sevensport-admin.env && sudo chmod 600 /etc/sevensport-admin.env
+
+# 2. HOME do serviço (o npm precisa de um lugar para o cache)
+sudo mkdir -p /var/lib/sevensport-admin
+
+# 3. O serviço. Confira `User=` no arquivo antes: tem que ser o dono de /opt/apps/seven-sport.
+sudo cp admin/sevensport-admin.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now sevensport-admin
+systemctl status sevensport-admin
+```
+
+Depois acrescente ao server block em `/etc/nginx/conf.d/sevensport.conf` (o bloco completo está
+em "2. Nginx") e recarregue com `sudo nginx -t && sudo systemctl reload nginx`.
+
+⚠ **O painel só deve existir sob HTTPS.** O cookie de sessão só ganha a marca `Secure` quando o
+Nginx repassa `X-Forwarded-Proto: https`. Faça o passo 3 do deploy (certbot) antes de divulgar
+o endereço para o cliente.
+
+### O dia a dia
+
+1. Entrar em `sevensport.com.br/admin`
+2. Trocar, arrastar, remover, reordenar
+3. **Salvar** — grava o conteúdo, ainda não mexe no site
+4. **Publicar no site** — roda o build e leva para o ar (~1 min, com log na tela)
+
+A etiqueta no topo diz onde você está: `alterações não salvas` → `salvo — falta publicar` →
+`tudo publicado`.
+
+As três abas:
+
+| Aba | O que dá para fazer |
+|---|---|
+| **Galeria** | Times do portfólio: acrescentar, trocar foto, editar nome e modalidade, reordenar, remover. A ordem daqui é a ordem no site, e o primeiro da lista também aparece no topo da home e no rodapé. |
+| **Destaques** | As três imagens de posição fixa: topo de `/uniformes`, uniforme corporativo e a arte de exemplo de "Como funciona". Trocam de foto, mas não somem — o layout conta com elas. |
+| **Produtos** | Uma foto por categoria de `/produtos`. Sem foto, o site desenha a peça em vetor. Criar e apagar categoria continua sendo código (`src/data/produtos.ts`). |
+
+O painel **converte a foto sozinho**: aplica o giro do EXIF (foto de celular deitada endireita),
+redimensiona para a largura certa e salva em WebP com qualidade 82 — as mesmas regras de
+`scripts/preparar-imagens.mjs`. Pode mandar a foto direto da câmera.
+
+O que ele **não** faz é recortar. Foto com o balcão da loja no fundo entra com o balcão. Para
+recorte fino, o caminho continua sendo o script — e o original de tudo que passou pelo painel
+fica guardado em `dados/originais/`, então dá para recortar depois sem pedir a foto de novo.
+
+### Onde o conteúdo mora
+
+```
+dados/galeria.json      o conteúdo editável (fonte de verdade)
+dados/originais/        o arquivo cru de cada upload — é o desfazer
+dados/estado.json       o que já foi publicado
+public/galeria/*.webp   as fotos convertidas, que o build copia para out/
+```
+
+**Nada disso vai para o git**, de propósito: a VPS escreve nesses caminhos, e um `git pull` no
+deploy não pode conflitar com o que o dono da loja acabou de salvar.
+
+A consequência é que **o backup é seu**:
+
+```bash
+rsync -az /opt/apps/seven-sport/dados/ /opt/apps/seven-sport/public/galeria/ destino:/backup/seven-sport/
+```
+
+`src/data/portfolio.ts` continua no git com o conteúdo original — é a **semente**, com que uma
+instalação nova nasce. Depois do primeiro Salvar, quem manda é `dados/galeria.json`, e mexer na
+semente não muda mais o site. Quem lê o código precisa saber disso; por isso os nomes lá
+terminam em `Seed`.
+
+### Segurança
+
+| | |
+|---|---|
+| Senha | scrypt (32 MB por tentativa), nunca guardada em claro |
+| Sessão | cookie assinado com HMAC, `HttpOnly` + `SameSite=Strict`, 12 h |
+| Força bruta | 5 erros por IP, 15 min de castigo |
+| Escuta | `127.0.0.1` apenas — quem fala com a internet é o Nginx |
+| Upload | o `sharp` recusa o que não for imagem; o nome do arquivo do cliente nunca vira caminho |
+
+Para **expulsar uma sessão perdida** (celular roubado, senha vazada), troque `ADMIN_SEGREDO` em
+`/etc/sevensport-admin.env` e `sudo systemctl restart sevensport-admin`. Todo mundo cai na hora.
+
+### Rodar na sua máquina
+
+```bash
+npm run admin:senha        # cole a saída em admin/.env.local
+npm run admin              # http://127.0.0.1:4123/admin
+```
+
+`admin/.env.local` é ignorado pelo git (`.env*.local`). Em local o cookie sai sem `Secure`,
+senão o navegador o descartaria em HTTP e o login entraria em loop.
+
+### Depois de mexer no catálogo de produtos
+
+`admin/semente.json` guarda a lista de produtos que o painel exibe. Mexeu em
+`src/data/produtos.ts` (categoria nova, nome alterado)?
+
+```bash
+npm run admin:semear       # e commite o JSON junto
+```
+
+Em Node ≥ 22.18 o painel relê o `.ts` direto ao subir, então na prática ele já se corrige
+sozinho; o JSON é a rede de proteção para Node antigo. Este script **não** roda no `prebuild` de
+propósito: ele escreve um arquivo versionado, e a VPS reescrevendo arquivo versionado durante o
+build deixaria a árvore suja e quebraria o `git pull` seguinte.
+
+### Se algo der errado no painel
+
+| Sintoma | Causa quase certa |
+|---|---|
+| `/admin` dá 404 | Falta o `location /admin` no Nginx, ou o serviço está parado (`systemctl status sevensport-admin`) |
+| Login não passa, sem erro na tela | Cookie descartado: o painel está em HTTP puro, ou falta `proxy_set_header X-Forwarded-Proto $scheme` |
+| Upload falha em foto grande | `client_max_body_size` do Nginx (o padrão dele é 1 MB — o bloco recomendado usa 26 MB) |
+| "Publicar" falha e o log fala de permissão | O `User=` do serviço não é dono de `/opt/apps/seven-sport`, ou falta `/var/lib/sevensport-admin` |
+| Foto some depois de publicar | A foto foi salva mas o time não foi salvo; a limpeza de órfãs recolhe arquivo sem dono depois de 1 h |
+| Build falha citando "Manifesto inválido" | `dados/galeria.json` foi editado à mão. Corrija ou apague o arquivo — sem ele o site volta ao conteúdo de `src/data/` |
+
+O site no ar **nunca** fica quebrado por um build que falhou: o `out/` só é reescrito quando o
+build termina bem. Falhou, o visitante continua vendo a versão anterior.
+
+---
 
 ## Antes de publicar — pendências com o cliente
 
