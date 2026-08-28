@@ -145,6 +145,13 @@ export const portfolioSeed: Uniforme[] = [
     categoria: 'escola',
     foto: { frente: '/fotos/erem-jms.webp' },
   },
+  {
+    slug: 'amigos-do-gole-agasalho',
+    time: 'Amigos do Gole',
+    contexto: 'Agasalho da diretoria',
+    categoria: 'campo',
+    foto: { frente: '/fotos/agasalho-amigos-do-gole.webp' },
+  },
 ];
 
 /** Uniforme de empresa — vive na seção corporativa de /uniformes. */

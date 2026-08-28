@@ -466,6 +466,24 @@ catálogo com a contagem.
 ⚠ `/produtos` deixou de se anunciar como "Catálogo" (virou "Categorias") quando esta página
 nasceu. Duas seções com o mesmo nome confundiriam exatamente o cliente que o dono quer impressionar.
 
+### Trabalho acrescentado no código não chega sozinho ao ar
+
+Depois do primeiro Salvar no painel, quem manda é `dados/galeria.json`, e a semente vira só o ponto
+de partida de uma instalação nova. Isso é o certo — senão apagar um time no painel não funcionaria.
+
+O efeito colateral é que um trabalho acrescentado em `portfolio.ts` nunca apareceria num site que já
+rodou o painel. Para essa ponte existe:
+
+```bash
+npm run conteudo:sincronizar --simular   # mostra o que faria, sem escrever
+npm run conteudo:sincronizar             # aplica
+```
+
+Ele só **acrescenta** o que falta (comparando por slug) e **preenche categoria em branco** a partir
+da semente. Nunca altera nem remove o que o dono editou: categoria já preenchida não é tocada, mesmo
+que discorde da semente — ali houve escolha de alguém. Faz cópia datada do manifesto antes de
+escrever. Depois de rodar, publique.
+
 ### As gavetas do filtro
 
 Vivem em `categoriasDoCatalogo`, em `src/data/portfolio.ts` — hoje campo, society, futsal,
@@ -699,9 +717,13 @@ build termina bem. Falhou, o visitante continua vendo a versão anterior.
 
 ## Fotos que NÃO entraram, e por quê
 
-Das 25 recebidas, onze foram publicadas. As outras ficaram de fora por motivo concreto:
+Das 25 recebidas, **doze foram publicadas**. As outras ficaram de fora por motivo concreto.
 
-**Marca registrada de terceiro (4 fotos) — risco jurídico real, não publicar:**
+Em 28/08/2026 as 25 foram **auditadas de novo**, uma a uma, com segunda leitura independente
+em cada peça com escudo. As conclusões abaixo são o resultado dessa auditoria, não da triagem
+original. Nenhuma mudou de lado, e uma foi recuperada (a `5.jpeg`).
+
+**Marca registrada de terceiro (6 fotos) — risco jurídico real, não publicar:**
 
 | Foto | Problema |
 |---|---|
@@ -723,14 +745,28 @@ mas fica o registro.
 `3.jpeg` (chuteiras) traz marca d'água "Dola AI" e as chuteiras são renderizadas, não fotografadas.
 Publicar como se fosse o estoque da loja é anúncio enganoso. Ficou de fora.
 
+**Achados novos da auditoria de 28/08, sobre fotos que JÁ estavam no site:**
+
+- `1.jpeg` (bola de campo) tem, no canto inferior direito, um borrão retangular no lugar exato do
+  selo Pixelcut da `2.jpeg` — marca d’água apagada de forma malfeita. A auditoria também levantou
+  suspeita de imagem gerada por IA. O `bola-campo.webp` existe em `public/fotos/` mas **não está
+  referenciado em lugar nenhum**, então não está no ar. Não republique sem olhar.
+- `6.jpeg` (bola society, **publicada** em `/produtos`) tem cara de foto de catálogo do fornecedor
+  Penalty, não de foto da loja. Não é ilegal revender nem ilustrar com a imagem do fabricante, mas
+  vale saber que a foto não é da prateleira dele.
+
 **Marca d'água de app de edição (2 fotos):**
 `1.jpeg` e `2.jpeg` têm "Pixelcut" no canto. A `1.jpeg` foi aproveitada com o rodapé cortado;
 a `2.jpeg` (bola Topper) não deu para salvar.
 
-**Resolução insuficiente (3 fotos):**
-`4.jpeg` (543×472), `5.jpeg` (463×487) e `24.jpeg` (logo circular). O agasalho do "Amigos do Gole
-Diretoria" (`5.jpeg`) é ótimo e sem problema de marca — **peça o original ao dono**, ele resolve a
-categoria de agasalhos de uma vez.
+**Resolução insuficiente (2 fotos):**
+`4.jpeg` (543×472) e `24.jpeg` (logo circular, 738×1600 com tarjas).
+
+A `5.jpeg` (463×487) **foi recuperada e publicada** como `agasalho-amigos-do-gole.webp`: é a única
+peça de agasalho do lote com escudo próprio, e a categoria não tinha foto nenhuma. O corte tira o
+logo e o letreiro do topo da prancha; a largura fica nos 463 originais, sem ampliar — ampliar só
+deixaria borrado. ⚠ **Ainda vale pedir o original ao dono**: em tela de celular densa ela fica macia
+perto das outras.
 
 ## Cores e contraste — leia antes de mexer na paleta
 

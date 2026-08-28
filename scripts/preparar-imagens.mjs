@@ -35,6 +35,11 @@ const recortes = [
   { origem: '16.jpeg', saida: 'margirius-costas.webp', corte: [115, 25, 1015, 1575] },
   { origem: '15.jpeg', saida: 'arruma-nada.webp', corte: [175, 240, 860, 1320] },
 
+  // ---- agasalho: unica peca de agasalho com escudo proprio entre as 25 fotos.
+  // O corte tira o logo e o letreiro do topo da prancha; a largura fica em 463 porque
+  // e o que o original tem — ampliar so deixaria borrado. PEDIR O ORIGINAL AO DONO.
+  { origem: '5.jpeg', saida: 'agasalho-amigos-do-gole.webp', corte: [0, 95, 463, 392] },
+
   // ---- prancha completa, com os selos: é o que o cliente recebe no WhatsApp
   { origem: '14.jpeg', saida: 'prancha-exemplo.webp', corte: null, largura: 1400 },
 

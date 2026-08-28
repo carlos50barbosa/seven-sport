@@ -9,7 +9,8 @@
     "lint": "next lint",
     "admin": "node admin/servidor.mjs",
     "admin:senha": "node admin/senha.mjs",
-    "admin:semear": "node scripts/semear-conteudo.mjs"
+    "admin:semear": "node scripts/semear-conteudo.mjs",
+    "conteudo:sincronizar": "node scripts/sincronizar-semente.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",
