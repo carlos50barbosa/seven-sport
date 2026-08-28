@@ -15,14 +15,17 @@
  * foi recortada, versionada e publicada em `public/fotos/`, e mesmo assim não
  * apareceria no catálogo do ar.
  *
- * Este script fecha essa porta. Ele só ACRESCENTA o que falta, comparando por
- * slug — nunca altera nem remove o que o dono da loja editou. O manifesto anterior
- * fica salvo ao lado, com a data, antes de qualquer escrita.
+ * Este script fecha essa porta. Ele ACRESCENTA o que falta, comparando por slug, e
+ * corrige só o que é fato e não escolha: categoria em branco, e as dimensões que o
+ * manifesto declara para a prancha quando elas discordam do arquivo em disco.
+ * Nunca altera nem remove aquilo que o dono da loja de fato editou. O manifesto
+ * anterior fica salvo ao lado, com a data, antes de qualquer escrita.
  *
  * Depois de rodar, publique: pelo painel, ou com `npm run build`.
  */
 import { readFileSync, writeFileSync, existsSync, copyFileSync, renameSync } from 'node:fs';
 import { resolve } from 'node:path';
+import sharp from 'sharp';
 
 const raiz = resolve(import.meta.dirname, '..');
 const caminhoSemente = resolve(raiz, 'admin/semente.json');
@@ -66,7 +69,40 @@ for (const u of manifesto.portfolio) {
   classificados.push(u);
 }
 
-if (!faltando.length && !classificados.length) {
+/**
+ * Corrige as dimensões da prancha quando elas não batem com o arquivo em disco.
+ *
+ * Isto não é alterar edição do dono: largura e altura não são escolha de ninguém,
+ * são propriedade do arquivo. Quando discordam, quem está errado é o manifesto.
+ *
+ * E o estrago é silencioso: o navegador recebe um `width` menor que o arquivo,
+ * desenha a arte reduzida, e a letra miúda — selos, patrocinadores, telefone —
+ * volta a não se ler. Que é o problema inteiro justamente desta imagem, a única
+ * do site cujo conteúdo é texto.
+ *
+ * Aconteceu de verdade: a prancha foi regerada de 1400 para 1565px no código, o
+ * deploy subiu o arquivo novo, e o HTML no ar continuou declarando 1400 porque o
+ * manifesto manda depois do primeiro Salvar. `src` e `alt` seguem intocados —
+ * nesses dois houve escolha de alguém.
+ */
+const prancha = manifesto.pranchaExemplo;
+let pranchaCorrigida = null;
+if (prancha?.src) {
+  const naPasta = resolve(raiz, 'public', prancha.src.replace(/^\//, ''));
+  if (existsSync(naPasta)) {
+    const { width, height } = await sharp(naPasta).metadata();
+    if (width && height && (prancha.largura !== width || prancha.altura !== height)) {
+      pranchaCorrigida = {
+        de: `${prancha.largura}x${prancha.altura}`,
+        para: `${width}x${height}`,
+      };
+      prancha.largura = width;
+      prancha.altura = height;
+    }
+  }
+}
+
+if (!faltando.length && !classificados.length && !pranchaCorrigida) {
   console.log(`Nada a fazer: os ${semente.portfolio.length} trabalhos da semente já estão no ar.`);
   process.exit(0);
 }
@@ -82,6 +118,13 @@ if (faltando.length) {
 if (classificados.length) {
   console.log(`\n${classificados.length} sem categoria, classificados pela semente:\n`);
   for (const u of classificados) console.log(`  ~ ${u.time} → ${u.categoria}`);
+}
+
+if (pranchaCorrigida) {
+  console.log(
+    `\nPrancha de exemplo: o manifesto declara ${pranchaCorrigida.de}, ` +
+      `mas o arquivo tem ${pranchaCorrigida.para} — corrigindo a declaração.`,
+  );
 }
 
 if (simular) {
@@ -105,6 +148,7 @@ renameSync(temporario, caminhoManifesto);
 const feito = [
   faltando.length && `${faltando.length} acrescentado(s)`,
   classificados.length && `${classificados.length} classificado(s)`,
+  pranchaCorrigida && 'dimensões da prancha corrigidas',
 ].filter(Boolean);
 
 console.log(
