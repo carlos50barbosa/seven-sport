@@ -41,10 +41,21 @@ export function Header() {
     };
   }, [menuAberto]);
 
+  /*
+   * bg-osso/95, e não /85: o desfoque é enfeite, a legibilidade não pode
+   * depender dele. O iPhone deu o exemplo — sem o `-webkit-backdrop-filter` o
+   * desfoque simplesmente não acontece, a barra vira vidro sem fosco e o texto
+   * da página passa por baixo disputando espaço com o logo e o menu.
+   *
+   * O prefixo voltou (browserslist no package.json), mas o desfoque ainda cai
+   * sozinho quando o usuário liga "Reduzir transparência" no iOS. Com 95% a
+   * barra se sustenta nos dois casos, e onde o desfoque funciona a aparência
+   * não muda.
+   */
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 h-[var(--header-h)] transition-colors duration-300 ${
-        rolou ? 'border-b border-carvao/10 bg-osso/85 backdrop-blur-md' : 'bg-transparent'
+        rolou ? 'border-b border-carvao/10 bg-osso/95 backdrop-blur-md' : 'bg-transparent'
       }`}
     >
       <div className="mx-auto flex h-full max-w-conteudo items-center justify-between gap-4 px-5 sm:px-8">

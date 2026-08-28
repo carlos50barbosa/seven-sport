@@ -226,6 +226,15 @@ scripts/      preparar-imagens.mjs (recorta as fotos do cliente)
    por conflito — um jeito silencioso de quebrar o deploy semanas depois. O preço é que o backup
    de `dados/` passa a ser responsabilidade de quem opera a VPS, não do git.
 
+7. **`browserslist` explícito no `package.json`** — sem ele, o padrão do Browserslist
+   resolve para iOS Safari 18.5+ apenas. O autoprefixer conclui, corretamente para
+   esse alvo, que `-webkit-backdrop-filter` é desnecessário — e para de emiti-lo. O
+   resultado: em iPhone com iOS 15/16/17 o desfoque do header simplesmente não
+   acontece, a barra fixa vira vidro sem fosco e o texto da página passa por baixo
+   dela. Nada quebra, nada avisa; só fica feio no aparelho de quem não atualizou.
+   O alvo agora vai até `ios_saf 15.4`. Custo medido: +496 bytes de CSS, e o JS
+   ficou 794 bytes MENOR (o Next usa a própria lista para o bundle moderno).
+
 ---
 
 ## Deploy — sevensport.com.br
