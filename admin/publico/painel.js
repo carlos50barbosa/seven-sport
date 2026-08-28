@@ -213,6 +213,26 @@ function campoDeTexto(rotulo, valor, aoDigitar, opcoes = {}) {
   return h('div', { class: 'campo' }, h('label', {}, rotulo), entrada);
 }
 
+/** Seletor de gaveta do catálogo. Sem gavetas carregadas, some da tela. */
+function campoDeSelecao(rotulo, valor, aoMudar) {
+  const gavetas = dados.categorias ?? [];
+  if (!gavetas.length) return null;
+
+  const selecao = h(
+    'select',
+    {
+      onchange: (e) => {
+        aoMudar(e.target.value);
+        marcarSujo();
+        // Redesenha porque o filtro por categoria lá em cima pode deixar de casar.
+        desenhar();
+      },
+    },
+    gavetas.map((g) => h('option', { value: g.id, selected: g.id === valor }, g.rotulo)),
+  );
+  return h('div', { class: 'campo' }, h('label', {}, rotulo), selecao);
+}
+
 // ─────────────────────────────────────────────────────────────────── desenhar
 
 function fichaDeUniforme(uniforme, opcoes = {}) {
@@ -262,12 +282,15 @@ function fichaDeUniforme(uniforme, opcoes = {}) {
       {},
       h(
         'div',
-        { class: 'campos duplo' },
+        { class: 'campos triplo' },
         campoDeTexto('Nome do time', uniforme.time, (v) => (uniforme.time = v), {
           exemplo: 'Grêmio Cacimbinha',
         }),
         campoDeTexto('Modalidade', uniforme.contexto, (v) => (uniforme.contexto = v), {
           exemplo: 'Futebol de campo',
+        }),
+        campoDeSelecao('Filtro do catálogo', uniforme.categoria ?? 'outros', (v) => {
+          uniforme.categoria = v;
         }),
       ),
       h(
@@ -316,11 +339,28 @@ function fichaDeUniforme(uniforme, opcoes = {}) {
   );
 }
 
+/**
+ * Texto da busca da aba Galeria.
+ *
+ * Mora fora da função porque `desenhar()` recria a lista inteira a cada
+ * alteração; guardado dentro, o que foi digitado sumiria ao trocar uma foto.
+ */
+let buscaNaGaleria = '';
+
+/** Casa por nome do time ou pelo rótulo da gaveta — quem busca "escola" pensa no filtro. */
+function combinaComABusca(uniforme) {
+  const alvo = buscaNaGaleria.trim().toLowerCase();
+  if (!alvo) return true;
+  const gaveta = (dados.categorias ?? []).find((g) => g.id === uniforme.categoria);
+  return `${uniforme.time} ${uniforme.contexto} ${gaveta?.rotulo ?? ''}`.toLowerCase().includes(alvo);
+}
+
 function desenharGaleria() {
   const lista = $('lista-galeria');
   lista.replaceChildren();
 
   const times = dados.manifesto.portfolio;
+  const fichas = [];
 
   times.forEach((uniforme, i) => {
     const mover = (delta) => {
@@ -330,10 +370,24 @@ function desenharGaleria() {
       desenhar();
     };
 
+    // O índice usado aqui é o do manifesto, não o da tela. Por isso a busca
+    // ESCONDE cards em vez de montar uma lista filtrada: com lista filtrada, o
+    // "i" de mover e remover apontaria para outro time.
+    const noTopo = i === 0;
+    const noFim = i === times.length - 1;
+
     const acoes = [
       h(
         'button',
-        { type: 'button', class: 'botao miudo', disabled: i === 0, onclick: () => mover(-1), title: 'Subir' },
+        {
+          type: 'button',
+          class: 'botao miudo',
+          'data-mover': '1',
+          'data-limite': noTopo ? '1' : '',
+          disabled: noTopo,
+          onclick: () => mover(-1),
+          title: 'Subir',
+        },
         '↑',
       ),
       h(
@@ -341,7 +395,9 @@ function desenharGaleria() {
         {
           type: 'button',
           class: 'botao miudo',
-          disabled: i === times.length - 1,
+          'data-mover': '1',
+          'data-limite': noFim ? '1' : '',
+          disabled: noFim,
           onclick: () => mover(1),
           title: 'Descer',
         },
@@ -355,7 +411,7 @@ function desenharGaleria() {
           // A galeria não pode ficar vazia — o site quebraria o build na validação.
           disabled: times.length === 1,
           onclick: () => {
-            if (!confirm(`Tirar "${uniforme.time || 'este time'}" da galeria do site?`)) return;
+            if (!confirm(`Tirar "${uniforme.time || 'este time'}" do site?`)) return;
             times.splice(i, 1);
             marcarSujo();
             desenhar();
@@ -365,18 +421,68 @@ function desenharGaleria() {
       ),
     ];
 
-    lista.append(fichaDeUniforme(uniforme, { acoes }));
+    const ficha = fichaDeUniforme(uniforme, { acoes });
+    fichas.push({ ficha, uniforme });
+    lista.append(ficha);
   });
 
-  if (times[0]) {
-    lista.prepend(
-      h(
-        'p',
-        { class: 'ajuda' },
-        `O primeiro da lista — hoje ${times[0].time || 'sem nome'} — é o que aparece grande no topo da home e no rodapé.`,
-      ),
-    );
+  const contagem = h('p', { class: 'ajuda' });
+
+  /**
+   * Aplica a busca sem redesenhar.
+   *
+   * Redesenhar a cada tecla tiraria o foco do campo no meio da palavra — o mesmo
+   * motivo pelo qual os campos de texto das fichas não redesenham. Aqui a lista
+   * já está montada; a busca só decide quem fica visível.
+   */
+  function aplicarBusca() {
+    const buscando = buscaNaGaleria.trim() !== '';
+    let vistos = 0;
+
+    for (const { ficha, uniforme } of fichas) {
+      const casa = combinaComABusca(uniforme);
+      ficha.hidden = !casa;
+      if (casa) vistos += 1;
+    }
+
+    // Reordenar vendo só parte da lista move o time para uma posição que não é a
+    // que está na tela. Enquanto a busca estiver ativa, as setas ficam travadas.
+    for (const botao of lista.querySelectorAll('[data-mover]')) {
+      botao.disabled = buscando || botao.getAttribute('data-limite') === '1';
+    }
+
+    contagem.textContent = buscando
+      ? `${vistos} de ${times.length} — a ordem só pode ser mudada sem busca`
+      : `${times.length} ${times.length === 1 ? 'trabalho' : 'trabalhos'} no catálogo`;
   }
+
+  const busca = h('input', {
+    type: 'search',
+    value: buscaNaGaleria,
+    placeholder: 'Buscar por time, modalidade ou filtro…',
+    'aria-label': 'Buscar na galeria',
+    oninput: (e) => {
+      buscaNaGaleria = e.target.value;
+      aplicarBusca();
+    },
+  });
+
+  lista.prepend(
+    h(
+      'div',
+      { class: 'barra-busca' },
+      busca,
+      contagem,
+      times[0] &&
+        h(
+          'p',
+          { class: 'ajuda' },
+          `O primeiro da lista — hoje ${times[0].time || 'sem nome'} — é o que aparece grande no topo da home e no rodapé.`,
+        ),
+    ),
+  );
+
+  aplicarBusca();
 }
 
 function desenharDestaques() {
@@ -531,6 +637,18 @@ function tratar(erro) {
 
 async function carregar() {
   dados = await api('/api/conteudo');
+
+  /**
+   * O manifesto escrito antes do catálogo existir não tem categoria. Preencher
+   * aqui faz o primeiro Salvar migrar tudo de uma vez — sem script de migração,
+   * e sem o admin precisar saber que houve uma.
+   */
+  const gavetas = dados.categorias ?? [];
+  const padrao = gavetas.find((g) => g.id === 'outros')?.id ?? gavetas[0]?.id ?? 'outros';
+  const m = dados.manifesto;
+  for (const u of [...m.portfolio, m.uniformeDestaque, m.uniformeCorporativo]) {
+    if (u && !gavetas.some((g) => g.id === u.categoria)) u.categoria = padrao;
+  }
   sujo = false;
   $('btn-salvar').disabled = true;
   desenhar();

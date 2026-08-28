@@ -1,9 +1,36 @@
 {
+  "categorias": [
+    {
+      "id": "campo",
+      "rotulo": "Futebol de campo"
+    },
+    {
+      "id": "society",
+      "rotulo": "Society"
+    },
+    {
+      "id": "futsal",
+      "rotulo": "Futsal"
+    },
+    {
+      "id": "escola",
+      "rotulo": "Escolas"
+    },
+    {
+      "id": "empresa",
+      "rotulo": "Empresas"
+    },
+    {
+      "id": "outros",
+      "rotulo": "Outros"
+    }
+  ],
   "portfolio": [
     {
       "slug": "gremio-cacimbinha",
       "time": "Grêmio Cacimbinha",
       "contexto": "Futebol de campo",
+      "categoria": "campo",
       "foto": {
         "frente": "/fotos/gremio-cacimbinha.webp"
       }
@@ -12,6 +39,7 @@
       "slug": "santa-isabel",
       "time": "Santa Isabel",
       "contexto": "Futebol de campo",
+      "categoria": "campo",
       "foto": {
         "frente": "/fotos/santa-isabel.webp"
       }
@@ -20,6 +48,7 @@
       "slug": "ferroviario-carnaiba",
       "time": "Ferroviário Carnaíba",
       "contexto": "Enviado para PE",
+      "categoria": "campo",
       "foto": {
         "frente": "/fotos/ferroviario-frente.webp",
         "costas": "/fotos/ferroviario-costas.webp"
@@ -29,6 +58,7 @@
       "slug": "amigos-do-gole",
       "time": "Amigos do Gole",
       "contexto": "Com patrocínio",
+      "categoria": "campo",
       "foto": {
         "frente": "/fotos/amigos-do-gole-frente.webp",
         "costas": "/fotos/amigos-do-gole-costas.webp"
@@ -38,6 +68,7 @@
       "slug": "laranjo-fc",
       "time": "Laranjo FC",
       "contexto": "Veteranos · campo",
+      "categoria": "campo",
       "foto": {
         "frente": "/fotos/laranjo-fc.webp"
       }
@@ -46,6 +77,7 @@
       "slug": "erem-jms",
       "time": "EREM JMS",
       "contexto": "Escola de ensino médio",
+      "categoria": "escola",
       "foto": {
         "frente": "/fotos/erem-jms.webp"
       }
@@ -55,6 +87,7 @@
     "slug": "arruma-nada",
     "time": "Arruma Nada FC",
     "contexto": "Campo · com patrocínio",
+    "categoria": "campo",
     "foto": {
       "frente": "/fotos/arruma-nada.webp"
     }
@@ -63,6 +96,7 @@
     "slug": "margirius",
     "time": "Margirius",
     "contexto": "Uniforme de empresa",
+    "categoria": "empresa",
     "foto": {
       "frente": "/fotos/margirius-frente.webp",
       "costas": "/fotos/margirius-costas.webp"

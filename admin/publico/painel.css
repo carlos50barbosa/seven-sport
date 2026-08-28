@@ -345,3 +345,29 @@ dialog::backdrop { background: rgba(20, 24, 27, 0.55); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* Três campos por ficha desde que o catálogo ganhou filtro por categoria. */
+@media (min-width: 30rem) { .campos.triplo { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 52rem) { .campos.triplo { grid-template-columns: 1fr 1fr auto; } }
+
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+  color: var(--carvao);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+select:focus { outline: 2px solid var(--verde-forte); outline-offset: -1px; border-color: transparent; }
+
+/* Busca da aba Galeria. Fica antes das fichas e não rola junto no desktop. */
+.barra-busca {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+.barra-busca input { max-width: 26rem; }

@@ -33,6 +33,9 @@ const portfolio = await importarDados('portfolio.ts');
 const produtos = await importarDados('produtos.ts');
 
 const semente = {
+  // As gavetas do catálogo. O painel monta o seletor de categoria a partir daqui,
+  // então gaveta nova em portfolio.ts só aparece lá depois de rodar este script.
+  categorias: portfolio.categoriasDoCatalogo.map((c) => ({ id: c.id, rotulo: c.rotulo })),
   portfolio: portfolio.portfolioSeed,
   uniformeDestaque: portfolio.uniformeDestaqueSeed,
   uniformeCorporativo: portfolio.uniformeCorporativoSeed,

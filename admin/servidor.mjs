@@ -199,6 +199,22 @@ async function carregarCatalogo() {
   }
 }
 
+/**
+ * As gavetas do catálogo, para o painel montar o seletor de categoria.
+ *
+ * Mesma dupla de fontes do catálogo de produtos: o .ts quando o Node consegue
+ * lê-lo, a semente versionada quando não. Lista vazia não quebra o painel — o
+ * seletor apenas some, e o trabalho fica na gaveta padrão.
+ */
+async function carregarCategorias() {
+  try {
+    const modulo = await import(pathToFileURL(join(RAIZ, "src/data/portfolio.ts")).href);
+    return modulo.categoriasDoCatalogo.map((c) => ({ id: c.id, rotulo: c.rotulo }));
+  } catch {
+    return lerSemente().categorias ?? [];
+  }
+}
+
 function manifestoDaSemente() {
   const s = lerSemente();
   return {
@@ -234,7 +250,7 @@ async function lerManifesto() {
 }
 
 /** Mesmas regras de `src/data/conteudo.ts`, aplicadas antes de gravar. */
-function validarManifesto(m, slugsDeProduto) {
+function validarManifesto(m, slugsDeProduto, idsDeCategoria) {
   const erros = [];
   const caminhoOk = (c) => typeof c === 'string' && /^\/(fotos|galeria)\/[\w.-]+$/.test(c);
 
@@ -246,6 +262,11 @@ function validarManifesto(m, slugsDeProduto) {
     if (!u.slug?.trim()) erros.push(`${onde}: sem identificador`);
     if (!u.time?.trim()) erros.push(`${onde}: sem nome do time`);
     if (typeof u.contexto !== 'string') erros.push(`${onde}: sem modalidade`);
+    // Ausente é tolerado: o manifesto anterior ao catálogo não tinha o campo, e
+    // `conteudo.ts` joga na gaveta padrão. Presente e desconhecida é erro de verdade.
+    if (u.categoria && !idsDeCategoria.includes(u.categoria)) {
+      erros.push(`${onde}: categoria desconhecida (${u.categoria})`);
+    }
     if (!u.foto?.frente && !u.vetor) erros.push(`${onde}: sem foto de frente`);
     for (const lado of ['frente', 'costas']) {
       if (u.foto?.[lado] && !caminhoOk(u.foto[lado])) {
@@ -482,6 +503,8 @@ async function servirPainel(res, arquivo) {
 }
 
 const catalogo = await carregarCatalogo();
+const categorias = await carregarCategorias();
+const idsDeCategoria = categorias.map((c) => c.id);
 const slugsDeProduto = catalogo.map((p) => p.slug);
 
 const servidor = createServer(async (req, res) => {
@@ -562,6 +585,7 @@ const servidor = createServer(async (req, res) => {
       return responder(res, 200, {
         manifesto,
         catalogo,
+        categorias,
         publicacao,
         // "Salvei mas ainda não publiquei": o ar está numa versão anterior do manifesto.
         pendente: estado.manifestoPublicado !== manifesto.atualizadoEm,
@@ -571,7 +595,7 @@ const servidor = createServer(async (req, res) => {
 
     if (rota === '/api/conteudo' && req.method === 'PUT') {
       const recebido = JSON.parse(await lerCorpo(req, LIMITE_JSON));
-      const erros = validarManifesto(recebido, slugsDeProduto);
+      const erros = validarManifesto(recebido, slugsDeProduto, idsDeCategoria);
       if (erros.length) return responder(res, 422, { erro: 'Conteúdo inválido', erros });
 
       const manifesto = { ...recebido, versao: 1, atualizadoEm: new Date().toISOString() };
@@ -647,6 +671,6 @@ await lerManifesto();
 servidor.listen(config.porta, config.endereco, () => {
   console.log(
     `Painel da Seven Sport em http://${config.endereco}:${config.porta}${config.base}\n` +
-      `usuário: ${config.usuario} · ${catalogo.length} produtos no catálogo`,
+      `usuário: ${config.usuario} · ${catalogo.length} produtos · ${categorias.length} categorias`,
   );
 });

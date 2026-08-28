@@ -10,6 +10,7 @@ import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 const navegacao = [
   { rotulo: 'Uniformes', href: '/uniformes' },
+  { rotulo: 'Catálogo', href: '/catalogo' },
   { rotulo: 'Produtos', href: '/produtos' },
   { rotulo: 'Como funciona', href: '/#processo' },
   { rotulo: 'Contato', href: '/contato' },

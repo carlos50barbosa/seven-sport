@@ -163,6 +163,7 @@ src/
     uniformes/page.tsx
     produtos/page.tsx
     contato/page.tsx
+    catalogo/page.tsx       o catálogo de trabalhos, com filtro
     not-found.tsx
     sitemap.ts  robots.ts
     opengraph-image.tsx   OG 1200×630 gerada com next/og
@@ -170,6 +171,7 @@ src/
   components/
     layout/   Header · Footer · WhatsAppFloat
     sections/ Hero · Servicos · Galeria · Processo · Diferenciais · Orcamento · Localizacao
+              CatalogoGrade (grade filtrável de /catalogo)
     ui/       MockupBoard (assinatura) · KitSvg · DesenhoProduto · Amostras
               Logo · Button · SectionTitle · Reveal · Icons
   data/       site.ts · acabamentos.ts
@@ -440,6 +442,50 @@ node scripts/servir-estatico.mjs out 3200
 # http://127.0.0.1:3200
 ```
 
+## Catálogo — `/catalogo`
+
+A página que o dono abre no celular para mostrar o trabalho a um cliente, ou manda por link no
+WhatsApp. Lista **todos** os uniformes já produzidos, com filtro por modalidade.
+
+Foi dimensionada para 20 a 60 trabalhos. Abaixo disso a home já daria conta; acima disso o filtro
+deixa de bastar e a página passaria a pedir paginação.
+
+### Como se divide o trabalho entre as três seções
+
+| Onde | O que mostra | Para quem |
+|---|---|---|
+| Vitrine da home (`Galeria`) | os **6 primeiros** do catálogo | visitante que chegou por busca ou anúncio |
+| `/catalogo` | **todos**, com filtro | cliente que já está conversando, ou quem quer vasculhar |
+| `/produtos` | as **categorias** da loja | quem procura bola, chuteira ou tênis |
+
+O seis da vitrine está em `NA_VITRINE`, em `Galeria.tsx`. Fecha duas linhas na grade de três
+colunas, e existe para a home não virar acervo: despejar sessenta pranchas ali empurraria as
+seções de conversão para baixo. Passando de seis trabalhos, aparece sozinho um link para o
+catálogo com a contagem.
+
+⚠ `/produtos` deixou de se anunciar como "Catálogo" (virou "Categorias") quando esta página
+nasceu. Duas seções com o mesmo nome confundiriam exatamente o cliente que o dono quer impressionar.
+
+### As gavetas do filtro
+
+Vivem em `categoriasDoCatalogo`, em `src/data/portfolio.ts` — hoje campo, society, futsal,
+escolas, empresas e outros. Só entram no filtro as gavetas que têm trabalho dentro; botão que
+devolve "nenhum resultado" é ruído.
+
+Repare que `categoria` e `contexto` parecem a mesma coisa e não são. `contexto` é legenda livre
+("Enviado para PE", "Veteranos · campo") e dá personalidade ao card; `categoria` é gaveta fechada
+e serve para agrupar. Filtrar por texto livre daria uma gaveta por trabalho.
+
+Para criar uma gaveta: acrescente a linha em `categoriasDoCatalogo` **e rode
+`npm run admin:semear`**, senão o painel não oferece a opção nova.
+
+Trabalho salvo antes desta página existir cai em "Outros" — sem quebrar o build, de propósito, já
+que é um campo que o admin nunca teve como preencher. O painel preenche a gaveta no carregamento,
+então o primeiro Salvar migra tudo de uma vez.
+
+---
+
+
 ## Painel do admin — `/admin`
 
 O dono da loja troca, tira e acrescenta as fotos do site pelo navegador, do celular, sem
@@ -541,7 +587,7 @@ As três abas:
 
 | Aba | O que dá para fazer |
 |---|---|
-| **Galeria** | Times do portfólio: acrescentar, trocar foto, editar nome e modalidade, reordenar, remover. A ordem daqui é a ordem no site, e o primeiro da lista também aparece no topo da home e no rodapé. |
+| **Galeria** | Os trabalhos do catálogo: acrescentar, trocar foto, editar nome, modalidade e filtro, reordenar, remover. Tem busca por nome ou filtro, para achar um time no meio de dezenas. A ordem daqui é a ordem no site; os seis primeiros são a vitrine da home, e o primeiro também aparece no topo e no rodapé. |
 | **Destaques** | As três imagens de posição fixa: topo de `/uniformes`, uniforme corporativo e a arte de exemplo de "Como funciona". Trocam de foto, mas não somem — o layout conta com elas. |
 | **Produtos** | Uma foto por categoria de `/produtos`. Sem foto, o site desenha a peça em vetor. Criar e apagar categoria continua sendo código (`src/data/produtos.ts`). |
 

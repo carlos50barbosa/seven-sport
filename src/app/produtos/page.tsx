@@ -53,7 +53,7 @@ export default function ProdutosPage() {
       <section className="border-t border-carvao/10 bg-white py-20 lg:py-24">
         <div className="mx-auto max-w-conteudo px-5 sm:px-8">
           <SectionTitle
-            marcador="Catálogo"
+            marcador="Categorias"
             titulo="As categorias da Seven Sport"
             descricao={`Peças marcadas como sob medida são produzidas com a identidade do seu time ou da sua empresa, com pedido mínimo de ${site.comercial.pedidoMinimo} ${site.comercial.unidade} por produto. Bola, chuteira, tênis e meião são de prateleira, no varejo e no atacado.`}
           />

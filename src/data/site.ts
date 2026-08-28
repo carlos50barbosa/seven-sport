@@ -122,6 +122,8 @@ export const mensagens = {
   header: 'Olá, Seven Sport! Quero pedir um orçamento de uniforme.',
   galeria:
     'Olá, Seven Sport! Vi os uniformes no site e quero um parecido para o meu time. Podemos conversar?',
+  catalogo:
+    'Olá, Seven Sport! Vi o catálogo no site e quero um uniforme parecido para o meu time. Podemos conversar?',
   processo: 'Olá, Seven Sport! Quero começar a arte digital do uniforme do meu time.',
   produtos:
     'Olá, Seven Sport! Quero saber sobre os produtos da loja (bolas, chuteiras e tênis).',

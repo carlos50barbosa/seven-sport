@@ -28,11 +28,44 @@ import type { PadraoCamisa, CoresUniforme } from '@/components/ui/KitSvg';
  */
 export const mostrarNomeDosTimes = true;
 
+/**
+ * As gavetas do catálogo, e a ordem em que os filtros aparecem.
+ *
+ * Existe separada de `contexto` porque as duas coisas parecem iguais e não são:
+ * `contexto` é legenda livre ("Enviado para PE", "Veteranos · campo") e serve
+ * para o card ter personalidade; `categoria` é gaveta fechada e serve para
+ * agrupar. Tentar filtrar por texto livre daria uma gaveta por trabalho.
+ *
+ * O vocabulário veio do próprio site: `/produtos` já fala em "campo, society e
+ * futsal", e escola e empresa saíram dos trabalhos que a loja já tinha feito.
+ * Acrescentar uma gaveta é acrescentar uma linha aqui — mas depois disso rode
+ * `npm run admin:semear`, senão o painel não oferece a opção nova.
+ */
+export const categoriasDoCatalogo = [
+  { id: 'campo', rotulo: 'Futebol de campo' },
+  { id: 'society', rotulo: 'Society' },
+  { id: 'futsal', rotulo: 'Futsal' },
+  { id: 'escola', rotulo: 'Escolas' },
+  { id: 'empresa', rotulo: 'Empresas' },
+  { id: 'outros', rotulo: 'Outros' },
+] as const;
+
+export type CategoriaCatalogo = (typeof categoriasDoCatalogo)[number]['id'];
+
+/** Gaveta de quem chegou antes das gavetas existirem. */
+export const CATEGORIA_PADRAO: CategoriaCatalogo = 'outros';
+
+export function rotuloDaCategoria(id: CategoriaCatalogo): string {
+  return categoriasDoCatalogo.find((c) => c.id === id)?.rotulo ?? 'Outros';
+}
+
 export type Uniforme = {
   slug: string;
   time: string;
   /** Modalidade, mostrada como legenda discreta no card. Curta: divide a linha com o botão. */
   contexto: string;
+  /** Em que filtro do catálogo o trabalho aparece. Ver `categoriasDoCatalogo`. */
+  categoria: CategoriaCatalogo;
   /**
    * `costas` opcional: quando existe, o card gira no hover e no botão.
    * Quando a foto já é a prancha inteira (frente e costas lado a lado),
@@ -68,18 +101,21 @@ export const portfolioSeed: Uniforme[] = [
     slug: 'gremio-cacimbinha',
     time: 'Grêmio Cacimbinha',
     contexto: 'Futebol de campo',
+    categoria: 'campo',
     foto: { frente: '/fotos/gremio-cacimbinha.webp' },
   },
   {
     slug: 'santa-isabel',
     time: 'Santa Isabel',
     contexto: 'Futebol de campo',
+    categoria: 'campo',
     foto: { frente: '/fotos/santa-isabel.webp' },
   },
   {
     slug: 'ferroviario-carnaiba',
     time: 'Ferroviário Carnaíba',
     contexto: 'Enviado para PE',
+    categoria: 'campo',
     foto: {
       frente: '/fotos/ferroviario-frente.webp',
       costas: '/fotos/ferroviario-costas.webp',
@@ -89,6 +125,7 @@ export const portfolioSeed: Uniforme[] = [
     slug: 'amigos-do-gole',
     time: 'Amigos do Gole',
     contexto: 'Com patrocínio',
+    categoria: 'campo',
     foto: {
       frente: '/fotos/amigos-do-gole-frente.webp',
       costas: '/fotos/amigos-do-gole-costas.webp',
@@ -98,12 +135,14 @@ export const portfolioSeed: Uniforme[] = [
     slug: 'laranjo-fc',
     time: 'Laranjo FC',
     contexto: 'Veteranos · campo',
+    categoria: 'campo',
     foto: { frente: '/fotos/laranjo-fc.webp' },
   },
   {
     slug: 'erem-jms',
     time: 'EREM JMS',
     contexto: 'Escola de ensino médio',
+    categoria: 'escola',
     foto: { frente: '/fotos/erem-jms.webp' },
   },
 ];
@@ -113,6 +152,7 @@ export const uniformeCorporativoSeed: Uniforme = {
   slug: 'margirius',
   time: 'Margirius',
   contexto: 'Uniforme de empresa',
+  categoria: 'empresa',
   foto: {
     frente: '/fotos/margirius-frente.webp',
     costas: '/fotos/margirius-costas.webp',
@@ -124,6 +164,7 @@ export const uniformeDestaqueSeed: Uniforme = {
   slug: 'arruma-nada',
   time: 'Arruma Nada FC',
   contexto: 'Campo · com patrocínio',
+  categoria: 'campo',
   foto: { frente: '/fotos/arruma-nada.webp' },
 };
 

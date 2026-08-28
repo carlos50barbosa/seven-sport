@@ -5,6 +5,8 @@ import {
   uniformeCorporativoSeed,
   uniformeDestaqueSeed,
   pranchaExemploSeed,
+  categoriasDoCatalogo,
+  CATEGORIA_PADRAO,
   type PranchaExemplo,
   type Uniforme,
 } from '@/data/portfolio';
@@ -53,6 +55,8 @@ function recusar(motivo: string): never {
   );
 }
 
+const CATEGORIAS_VALIDAS: readonly string[] = categoriasDoCatalogo.map((c) => c.id);
+
 function exigirUniforme(valor: unknown, onde: string): Uniforme {
   if (!valor || typeof valor !== 'object') recusar(`${onde} não é um objeto`);
   const u = valor as Uniforme;
@@ -61,7 +65,18 @@ function exigirUniforme(valor: unknown, onde: string): Uniforme {
   }
   // Sem foto e sem vetor a MockupBoard renderiza uma prancha vazia — barra aqui.
   if (!u.foto?.frente && !u.vetor) recusar(`${onde} (${u.slug}) não tem foto de frente nem vetor`);
-  return u;
+
+  /**
+   * Categoria é normalizada, não exigida — de propósito.
+   *
+   * O manifesto que já está no ar foi escrito antes do catálogo existir e não tem
+   * esse campo. Exigir aqui quebraria o build do site em produção no primeiro
+   * deploy, por conta de um dado que o admin nunca teve como preencher. Cai na
+   * gaveta "Outros", que é visível e corrigível no painel em dois cliques.
+   */
+  const categoria = CATEGORIAS_VALIDAS.includes(u.categoria) ? u.categoria : CATEGORIA_PADRAO;
+
+  return { ...u, categoria };
 }
 
 function lerManifesto(): Manifesto | null {
