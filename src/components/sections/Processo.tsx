@@ -1,11 +1,10 @@
-import Image from 'next/image';
 import { SectionTitle } from '@/components/ui/SectionTitle';
 import { Reveal } from '@/components/ui/Reveal';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
+import { PranchaAmpliavel } from '@/components/ui/PranchaAmpliavel';
 import { mensagens } from '@/data/site';
 import { pranchaExemplo } from '@/data/conteudo';
-import { asset } from '@/lib/asset';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 /** Sete etapas — o nome da loja é Seven. O numeral só existe aqui, onde a ordem importa. */
@@ -36,35 +35,11 @@ export function Processo() {
 
         <Reveal delay={60}>
           <figure className="mt-12 lg:mt-14">
-            {/*
-              A prancha nasce com 1400px e é nela que mora a letra miúda — escudo,
-              patrocinadores, nome e número. Presa em max-w-3xl (768px) ela aparecia
-              a 55% do tamanho nativo e nada disso dava para ler; por isso agora
-              ocupa a largura inteira do contêiner. Como o next/image roda
-              `unoptimized`, o navegador já baixa o arquivo cheio: crescer não custa
-              byte nenhum. No celular nenhuma largura resolve, então a arte também é
-              um link para o arquivo em tamanho real.
-            */}
-            <a
-              href={asset(pranchaExemplo.src)}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Abrir a arte em tamanho real"
-              className="group block rounded-prancha focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-dourado"
-            >
-              <Image
-                src={asset(pranchaExemplo.src)}
-                alt={pranchaExemplo.alt}
-                width={pranchaExemplo.largura}
-                height={pranchaExemplo.altura}
-                sizes="(min-width: 1216px) 1152px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2.5rem)"
-                className="w-full rounded-prancha border border-white/10 transition-colors duration-200 ease-prancha group-hover:border-white/30"
-              />
-            </a>
+            <PranchaAmpliavel prancha={pranchaExemplo} />
             <figcaption className="mx-auto mt-4 max-w-3xl text-center text-[0.8125rem] text-white/55">
               A arte que sai daqui antes de qualquer costura — é este arquivo que chega no seu
-              WhatsApp, para você aprovar ou pedir ajuste. Abra a imagem em tamanho real para ler
-              o escudo, os patrocinadores e a numeração de perto.
+              WhatsApp, para você aprovar ou pedir ajuste. Toque em “Ampliar” para ler os selos,
+              os patrocinadores e a numeração de perto.
             </figcaption>
           </figure>
         </Reveal>

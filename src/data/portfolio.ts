@@ -186,6 +186,6 @@ export type PranchaExemplo = {
 export const pranchaExemploSeed: PranchaExemplo = {
   src: '/fotos/prancha-exemplo.webp',
   alt: 'Arte digital do uniforme do time Amigos do Gole: frente e costas lado a lado, com escudo, patrocinadores, nome e número, do jeito que a Seven Sport envia no WhatsApp antes de produzir.',
-  largura: 1400,
-  altura: 1078,
+  largura: 1565,
+  altura: 1205,
 };

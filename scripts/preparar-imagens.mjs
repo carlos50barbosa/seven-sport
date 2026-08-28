@@ -40,8 +40,11 @@ const recortes = [
   // e o que o original tem — ampliar so deixaria borrado. PEDIR O ORIGINAL AO DONO.
   { origem: '5.jpeg', saida: 'agasalho-amigos-do-gole.webp', corte: [0, 95, 463, 392] },
 
-  // ---- prancha completa, com os selos: é o que o cliente recebe no WhatsApp
-  { origem: '14.jpeg', saida: 'prancha-exemplo.webp', corte: null, largura: 1400 },
+  // ---- prancha completa, com os selos: é o que o cliente recebe no WhatsApp.
+  // 'original' e nao um numero: esta e a unica imagem do site cujo CONTEUDO e texto
+  // (selos, patrocinadores, telefone). O teto de 1400 descartava 12% da resolucao que
+  // o original tem, e era justamente essa margem que decidia se a letra miuda se le.
+  { origem: '14.jpeg', saida: 'prancha-exemplo.webp', corte: null, largura: 'original' },
 
   // ---- produtos de prateleira
   { origem: '6.jpeg', saida: 'bola-society.webp', corte: null, largura: 800 },
@@ -69,8 +72,10 @@ async function preparar() {
     }
 
     const destino = join(DESTINO_UNIFORMES, item.saida);
-    const info = await img
-      .resize({ width: item.largura ?? LARGURA_CARD, withoutEnlargement: true })
+    const info = await (item.largura === 'original'
+      ? img
+      : img.resize({ width: item.largura ?? LARGURA_CARD, withoutEnlargement: true })
+    )
       .webp({ quality: 82 })
       .toFile(destino);
 
