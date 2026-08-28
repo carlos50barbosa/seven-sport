@@ -4,7 +4,7 @@ import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { mensagens, site } from '@/data/site';
-import { portfolio } from '@/data/conteudo';
+import { catalogo } from '@/data/conteudo';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ export default function CatalogoPage() {
 
       <section className="border-t border-carvao/10 bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-conteudo px-5 sm:px-8">
-          <CatalogoGrade uniformes={portfolio} />
+          <CatalogoGrade uniformes={catalogo} />
 
           <Reveal>
             <div className="mt-14 flex flex-col items-start justify-between gap-6 border border-dashed border-carvao/25 p-8 sm:flex-row sm:items-center">

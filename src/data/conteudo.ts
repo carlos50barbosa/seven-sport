@@ -124,7 +124,28 @@ export const uniformeCorporativo: Uniforme =
 export const pranchaExemplo: PranchaExemplo = manifesto?.pranchaExemplo ?? pranchaExemploSeed;
 
 /**
- * O catálogo é código (nome, descrição, desenho vetorial); só a FOTO é editável.
+ * Tudo que a loja já produziu — é isto que `/catalogo` lista.
+ *
+ * União do portfólio com os destaques, e não só o portfólio. Um trabalho
+ * promovido a destaque continua sendo um trabalho: o Arruma Nada e o Margirius
+ * estavam no ar, na página de uniformes, e mesmo assim ficavam de fora do
+ * catálogo — que se anuncia como "todo uniforme que já saiu daqui".
+ *
+ * A alternativa seria pedir ao admin que cadastrasse o mesmo trabalho duas vezes,
+ * o que garantiria que uma das duas cópias ficaria desatualizada. Aqui ele
+ * cadastra uma vez e o catálogo se monta sozinho.
+ *
+ * Dedupe por slug, com o portfólio ganhando: é a lista cuja ordem o admin
+ * controla no painel.
+ */
+export const catalogo: Uniforme[] = (() => {
+  const jaEstao = new Set(portfolio.map((u) => u.slug));
+  const destaques = [uniformeDestaque, uniformeCorporativo].filter((u) => !jaEstao.has(u.slug));
+  return [...portfolio, ...destaques];
+})();
+
+/**
+ * O catálogo de produtos é código (nome, descrição, desenho vetorial); só a FOTO é editável.
  * Por isso a ordem e os slugs vêm sempre de `produtos.ts` — o painel nunca cria
  * nem apaga produto, apenas preenche ou limpa a foto de cada um.
  */

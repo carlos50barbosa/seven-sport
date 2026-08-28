@@ -6,7 +6,7 @@ import { MockupBoard } from '@/components/ui/MockupBoard';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { mostrarNomeDosTimes } from '@/data/portfolio';
-import { portfolio } from '@/data/conteudo';
+import { catalogo } from '@/data/conteudo';
 import { mensagens } from '@/data/site';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
@@ -21,8 +21,8 @@ import { buildWhatsAppUrl } from '@/lib/whatsapp';
 const NA_VITRINE = 6;
 
 export function Galeria() {
-  const amostra = portfolio.slice(0, NA_VITRINE);
-  const temMais = portfolio.length > NA_VITRINE;
+  const amostra = catalogo.slice(0, NA_VITRINE);
+  const temMais = catalogo.length > NA_VITRINE;
 
   return (
     <section id="galeria" className="scroll-mt-24 border-t border-carvao/10 bg-white py-20 lg:py-28">
@@ -51,7 +51,7 @@ export function Galeria() {
               href="/catalogo"
               className="group mt-8 inline-flex items-center gap-2 text-body-lg font-semibold text-verde-forte underline-offset-4 hover:underline"
             >
-              Ver os {portfolio.length} trabalhos do catálogo
+              Ver os {catalogo.length} trabalhos do catálogo
               <ArrowRight
                 aria-hidden="true"
                 className="h-5 w-5 transition-transform group-hover:translate-x-1"
