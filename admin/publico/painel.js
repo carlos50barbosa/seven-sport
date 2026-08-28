@@ -340,7 +340,7 @@ function fichaDeUniforme(uniforme, opcoes = {}) {
 }
 
 /**
- * Texto da busca da aba Galeria.
+ * Texto da busca da aba Catálogo.
  *
  * Mora fora da função porque `desenhar()` recria a lista inteira a cada
  * alteração; guardado dentro, o que foi digitado sumiria ao trocar uma foto.
@@ -408,7 +408,7 @@ function desenharGaleria() {
         {
           type: 'button',
           class: 'botao miudo perigo espaco',
-          // A galeria não pode ficar vazia — o site quebraria o build na validação.
+          // O catálogo não pode ficar vazio — o site quebraria o build na validação.
           disabled: times.length === 1,
           onclick: () => {
             if (!confirm(`Tirar "${uniforme.time || 'este time'}" do site?`)) return;
@@ -460,7 +460,7 @@ function desenharGaleria() {
     type: 'search',
     value: buscaNaGaleria,
     placeholder: 'Buscar por time, modalidade ou filtro…',
-    'aria-label': 'Buscar na galeria',
+    'aria-label': 'Buscar no catálogo',
     oninput: (e) => {
       buscaNaGaleria = e.target.value;
       aplicarBusca();
