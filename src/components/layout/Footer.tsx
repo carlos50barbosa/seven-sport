@@ -3,7 +3,7 @@ import { Instagram, MapPin, Phone } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { MockupBoard } from '@/components/ui/MockupBoard';
 import { ThreadsIcon, WhatsAppIcon } from '@/components/ui/Icons';
-import { mensagens, site } from '@/data/site';
+import { contatos, site } from '@/data/site';
 import { portfolio } from '@/data/conteudo';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
@@ -36,27 +36,34 @@ export function Footer() {
               chuteiras e tênis. Loja física em {site.endereco.cidade}/{site.endereco.estado}.
             </p>
 
-            <ul className="mt-6 space-y-3 text-[0.9375rem]">
-              <li>
-                <a
-                  href={buildWhatsAppUrl(mensagens.contato)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-start gap-2.5 transition-colors hover:text-white"
-                >
-                  <WhatsAppIcon className="mt-0.5 h-4 w-4 shrink-0 text-verde-claro" />
-                  {site.telefone.formatado}
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`tel:${site.telefone.e164}`}
-                  className="inline-flex items-start gap-2.5 transition-colors hover:text-white"
-                >
-                  <Phone aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-verde-claro" strokeWidth={1.75} />
-                  Ligar para a loja
-                </a>
-              </li>
+            <ul className="mt-6 space-y-4 text-[0.9375rem]">
+              {/* Rotulado como na página de contato: mesma ordem, mesmas palavras. */}
+              {contatos.map((contato) => (
+                <li key={contato.rotulo}>
+                  <p className="text-[0.75rem] uppercase tracking-[0.08em] text-white/40">
+                    {contato.rotulo}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1">
+                    <a
+                      href={buildWhatsAppUrl(contato.mensagem, contato.telefone.digitos)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 transition-colors hover:text-white"
+                    >
+                      <WhatsAppIcon className="h-4 w-4 shrink-0 text-verde-claro" />
+                      {contato.telefone.formatado}
+                    </a>
+                    <a
+                      href={`tel:${contato.telefone.e164}`}
+                      aria-label={`Ligar para ${contato.telefone.formatado}`}
+                      className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                    >
+                      <Phone aria-hidden="true" className="h-4 w-4 shrink-0 text-verde-claro" strokeWidth={1.75} />
+                      Ligar
+                    </a>
+                  </div>
+                </li>
+              ))}
               <li className="flex items-start gap-2.5">
                 <MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-verde-claro" strokeWidth={1.75} />
                 <address className="not-italic leading-relaxed">

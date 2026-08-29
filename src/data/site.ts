@@ -35,10 +35,30 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://servicostech.com.br/seven-sport',
 
   telefone: {
-    // Único lugar onde o número existe. Alterou aqui, alterou no site inteiro.
+    /**
+     * O número da LOJA. É o que todo botão de orçamento usa, e o único que vai
+     * para o JSON-LD, para a imagem de compartilhamento e para o botão
+     * flutuante. Alterou aqui, alterou em todos eles.
+     */
     e164: '+5511995852948',
     digitos: '5511995852948',
     formatado: '(11) 99585-2948',
+  },
+
+  /**
+   * Segundo número, a pedido do dono: quem cuida da arte.
+   *
+   * Aparece só na página de contato e no rodapé, e sempre com rótulo. Dois
+   * números soltos lado a lado não informam, perguntam — quem chega no site
+   * precisa saber para qual dos dois falar antes de escolher.
+   *
+   * Nenhum CTA de orçamento aponta para cá, de propósito: "pedir orçamento"
+   * continua sendo conversa com a loja, que é quem fecha o pedido.
+   */
+  telefoneDesigner: {
+    e164: '+5511949776443',
+    digitos: '5511949776443',
+    formatado: '(11) 94977-6443',
   },
 
   endereco: {
@@ -132,4 +152,15 @@ export const mensagens = {
     'Olá, Seven Sport! Quero um orçamento de uniforme corporativo para a minha empresa.',
   localizacao: 'Olá, Seven Sport! Quero confirmar o horário de atendimento da loja.',
   contato: 'Olá, Seven Sport! Estou entrando em contato pelo site.',
+  designer: 'Olá, Seven Sport! Quero falar sobre a arte do uniforme do meu time.',
 } as const;
+
+/**
+ * Os dois contatos, na ordem em que aparecem — a loja primeiro, que é quem
+ * fecha pedido. Mora aqui, e não em cada página, para o rótulo e a ordem não
+ * divergirem entre a página de contato e o rodapé.
+ */
+export const contatos = [
+  { rotulo: 'Loja', telefone: site.telefone, mensagem: mensagens.contato },
+  { rotulo: 'Designer', telefone: site.telefoneDesigner, mensagem: mensagens.designer },
+] as const;

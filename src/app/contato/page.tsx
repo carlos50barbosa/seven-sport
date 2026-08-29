@@ -4,7 +4,7 @@ import { Orcamento } from '@/components/sections/Orcamento';
 import { Localizacao } from '@/components/sections/Localizacao';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
-import { mensagens, site } from '@/data/site';
+import { contatos, site } from '@/data/site';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 export const metadata: Metadata = {
@@ -32,15 +32,33 @@ export default function ContatoPage() {
             digital e ajusta até ficar do jeito que você quer.
           </p>
 
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Button href={buildWhatsAppUrl(mensagens.contato)}>
-              <WhatsAppIcon className="h-5 w-5" />
-              {site.telefone.formatado}
-            </Button>
-            <Button href={`tel:${site.telefone.e164}`} variante="secundario">
-              <Phone aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-              Ligar para a loja
-            </Button>
+          {/*
+            Cada número vem rotulado. Dois telefones idênticos lado a lado não
+            informam nada — só transferem para o visitante a dúvida de para qual
+            deles falar, que é justamente o que a página existe para resolver.
+          */}
+          <div className="mt-9 grid gap-8 sm:max-w-2xl sm:grid-cols-2">
+            {contatos.map((contato) => (
+              <div key={contato.rotulo}>
+                <p className="text-caption text-vermelho-escuro">
+                  {contato.rotulo.toUpperCase()}
+                </p>
+                <div className="mt-4 flex flex-col gap-3">
+                  <Button href={buildWhatsAppUrl(contato.mensagem, contato.telefone.digitos)}>
+                    <WhatsAppIcon className="h-5 w-5" />
+                    {contato.telefone.formatado}
+                  </Button>
+                  <Button
+                    href={`tel:${contato.telefone.e164}`}
+                    variante="secundario"
+                    aria-label={`Ligar para ${contato.telefone.formatado}`}
+                  >
+                    <Phone aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                    Ligar
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
