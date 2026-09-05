@@ -3,6 +3,7 @@ import { SectionTitle } from '@/components/ui/SectionTitle';
 import { Reveal } from '@/components/ui/Reveal';
 import { WhatsAppIcon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
+import { MapaSobDemanda } from '@/components/ui/MapaSobDemanda';
 import { mensagens, site } from '@/data/site';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
@@ -95,13 +96,7 @@ export function Localizacao() {
 
           <Reveal delay={60}>
             <div className="relative h-[340px] overflow-hidden border border-carvao/15 sm:h-[420px]">
-              <iframe
-                title={`Mapa da localização da ${site.nome} em ${site.endereco.cidade}`}
-                src={site.mapa.embed}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="h-full w-full grayscale-[.35]"
-              />
+              <MapaSobDemanda />
             </div>
           </Reveal>
         </div>

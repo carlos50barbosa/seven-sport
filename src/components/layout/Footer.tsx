@@ -130,11 +130,23 @@ export function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-7 text-[0.8125rem] sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {site.nome}. Todos os direitos reservados.
-            {site.empresa.razaoSocial ? ` · ${site.empresa.razaoSocial}` : ''}
-            {site.empresa.cnpj ? ` · CNPJ ${site.empresa.cnpj}` : ''}
-          </p>
+          <div className="flex flex-col gap-x-6 gap-y-2 sm:flex-row sm:items-center">
+            <p>
+              © {site.nome}. Todos os direitos reservados.
+              {site.empresa.razaoSocial ? ` · ${site.empresa.razaoSocial}` : ''}
+              {site.empresa.cnpj ? ` · CNPJ ${site.empresa.cnpj}` : ''}
+            </p>
+            {/*
+              Fica na barra legal, e não na lista de páginas: quem procura
+              política de privacidade procura no rodapé, junto do © e do CNPJ.
+            */}
+            <Link
+              href="/privacidade"
+              className="underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              Política de privacidade
+            </Link>
+          </div>
           <p>
             Desenvolvido por{' '}
             <a

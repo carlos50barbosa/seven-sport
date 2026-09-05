@@ -164,6 +164,7 @@ src/
     produtos/page.tsx
     contato/page.tsx
     catalogo/page.tsx       o catálogo de trabalhos, com filtro
+    privacidade/page.tsx  política de privacidade (LGPD)
     not-found.tsx
     sitemap.ts  robots.ts
     opengraph-image.tsx   OG 1200×630 gerada com next/og
@@ -174,6 +175,7 @@ src/
               CatalogoGrade (grade filtrável de /catalogo)
     ui/       MockupBoard (assinatura) · KitSvg · DesenhoProduto · Amostras
               Logo · Button · SectionTitle · Reveal · Icons
+              MapaSobDemanda (o mapa do Google, só depois do clique)
   data/       site.ts · acabamentos.ts
               portfolio.ts · produtos.ts   semente: com que conteúdo o site nasce
               conteudo.ts                  junta a semente com dados/galeria.json (build)
@@ -234,6 +236,39 @@ scripts/      preparar-imagens.mjs (recorta as fotos do cliente)
    dela. Nada quebra, nada avisa; só fica feio no aparelho de quem não atualizou.
    O alvo agora vai até `ios_saf 15.4`. Custo medido: +496 bytes de CSS, e o JS
    ficou 794 bytes MENOR (o Next usa a própria lista para o bundle moderno).
+
+---
+
+## Privacidade — por que não há banner de cookies
+
+O site **não grava nada** no navegador de quem visita: nenhuma ferramenta de análise de
+audiência, nenhum pixel de rede social, nenhum cookie próprio, nenhum `localStorage`. As fontes
+do Google vêm por `next/font/google`, que as **auto-hospeda em tempo de build** — o navegador do
+visitante não fala com o Google por causa delas. E o formulário de orçamento não envia nada a
+servidor nenhum: monta um texto e abre o WhatsApp.
+
+Sem rastreamento não há o que consentir, e é por isso que o site não tem aquela janela de aceite
+de cookies. A LGPD não exige banner (isso vem da diretiva europeia); o que ela cobra é
+transparência — daí a página `/privacidade`, ligada no rodapé.
+
+O único conteúdo de terceiro era o **iframe do Google Maps**, que grava cookies do Google no
+instante em que carrega. Por isso ele virou `MapaSobDemanda`: no lugar do mapa aparece uma planta
+de ruas desenhada em SVG e um botão, e o iframe só entra depois do clique. De quebra saiu da
+carga inicial o recurso mais pesado da página.
+
+Verificado no `out/` gerado, com o Chrome gravando a rede: **19 requisições no carregamento de
+`/contato`, zero domínios de terceiro**; depois do clique no botão, o iframe aparece, o foco do
+teclado vai para ele e só então `www.google.com` entra na lista.
+
+> ⚠ **Isto é um combinado, não um estado permanente.** No dia em que alguém colocar Google
+> Analytics, pixel do Meta, mapa carregando sozinho ou um formulário que grave dados em servidor,
+> as três frases acima deixam de ser verdade — e aí passa a caber banner de consentimento com
+> escolha granular, no que a ANPD orienta no *Guia Orientativo sobre Cookies*. Antes de subir uma
+> mudança dessas, atualize `src/app/privacidade/page.tsx` e a data em `atualizadoEm`.
+
+O painel do admin usa um cookie de sessão (`sevensport_admin`, `HttpOnly`, `SameSite=Strict`).
+Ele é estritamente necessário e fica numa área restrita — não entra nessa conta e dispensa
+consentimento.
 
 ---
 
